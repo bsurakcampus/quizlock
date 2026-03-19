@@ -610,6 +610,7 @@ function fetchTest(testId, attempt) {
   fetch(scriptUrl, {
     method: 'POST',
     redirect: 'follow',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify({ action: 'getTest', testId: testId })
   })
   .then(r => r.json())
@@ -772,6 +773,7 @@ async function saveTestToSheet(test) {
     await fetch(scriptUrl, {
       method: 'POST',
       redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({
         action: 'saveTest',
         id: test.id, title: test.title, date: test.date,
@@ -868,6 +870,7 @@ async function downloadCSV(testId, testTitle) {
   try {
     const res  = await fetch(scriptUrl, {
       method: 'POST', redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ action: 'getCSV', testId })
     });
     const json = await res.json();
@@ -916,6 +919,7 @@ async function releaseResults() {
   try {
     const res  = await fetch(scriptUrl, {
       method: 'POST', redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ action: 'releaseResults', testId: releaseTestId })
     });
     const json = await res.json();
@@ -970,6 +974,7 @@ async function sendSummary() {
     const res = await fetch(scriptUrl, {
       method: 'POST',
       redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ action: 'summary', testId: test.id, testTitle: test.title, testDate: test.date, tutorEmail: test.email }),
     });
     const json = await res.json();
@@ -1204,7 +1209,7 @@ async function fireAndForget(payload, attempt) {
   if (!scriptUrl) return;
 
   try {
-    const res  = await fetch(scriptUrl, { method: 'POST', redirect: 'follow', body: JSON.stringify(payload) });
+    const res  = await fetch(scriptUrl, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
     const json = await res.json();
     if (json.success) {
       if (noteEl) noteEl.textContent = '✅ Submitted. Check your email for full results with answer breakdown.';
