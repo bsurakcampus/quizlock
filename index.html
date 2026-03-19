@@ -479,6 +479,11 @@ pre.code-block{background:var(--ink);color:#f0f0f0;padding:1.2rem;border-radius:
         <div style="font-family:'DM Serif Display',serif;font-size:4rem;line-height:1;color:var(--accent)" id="res-score-num">—</div>
         <div style="font-size:.8rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-family:'DM Mono',monospace;margin-top:.4rem" id="res-score-pct">—</div>
       </div>
+      <div id="res-score-waiting" style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:1.4rem;margin-bottom:1.4rem">
+        <div style="font-size:1.8rem;margin-bottom:.5rem">⏳</div>
+        <div style="font-weight:600;font-size:.95rem;color:var(--ink);margin-bottom:.3rem">Calculating your score...</div>
+        <div style="font-size:.8rem;color:var(--muted);line-height:1.6">Please stay on this screen.<br>Your result will appear here in a few seconds.</div>
+      </div>
       <div style="background:var(--cream);border-radius:8px;padding:1.4rem 1.6rem;margin-bottom:1.4rem;text-align:left;font-size:.88rem;line-height:2">
         <div>Student: <strong id="res-name">—</strong></div>
         <div>Test: <strong id="res-title">—</strong></div>
@@ -652,7 +657,7 @@ function showFetchError(msg) {
   show('s-land');
 }
 
-const HARDCODED_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxQ2d42G9r89_6_s94KRaveWJfWucgI-nuorFWZalpytMMmn3HE9BgYJzIFPLyAc7T1xA/exec';
+const HARDCODED_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwAsT-VwR0UbAncuPWGljA9HLMcyhqIAniq8dVd1YCCI5aYEN1RLaoiYicyzxlsmVp83g/exec';
 function loadScriptUrl() { /* hardcoded — nothing to load */ }
 function saveScriptUrl() { /* hardcoded — nothing to save */ }
 function getScriptUrl() { return HARDCODED_SCRIPT_URL; }
@@ -1216,15 +1221,17 @@ async function fireAndForget(payload, attempt) {
     const res  = await fetch(scriptUrl, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
     const json = await res.json();
     if (json.success) {
-      // Show score on screen as soon as server responds
-      const scoreDisplay = document.getElementById('res-score-display');
-      const scoreNum     = document.getElementById('res-score-num');
-      const scorePct     = document.getElementById('res-score-pct');
+      // Show score, hide waiting message
+      const scoreDisplay  = document.getElementById('res-score-display');
+      const scoreWaiting  = document.getElementById('res-score-waiting');
+      const scoreNum      = document.getElementById('res-score-num');
+      const scorePct      = document.getElementById('res-score-pct');
       if (scoreDisplay && json.score !== undefined) {
-        scoreNum.textContent  = `${json.score}/${json.total}`;
-        scorePct.textContent  = `${json.percent}% — ${json.status}`;
-        scorePct.style.color  = json.percent >= 40 ? 'var(--green)' : 'var(--accent)';
+        scoreNum.textContent       = `${json.score}/${json.total}`;
+        scorePct.textContent       = `${json.percent}% — ${json.status}`;
+        scorePct.style.color       = json.percent >= 40 ? 'var(--green)' : 'var(--accent)';
         scoreDisplay.style.display = 'block';
+        if (scoreWaiting) scoreWaiting.style.display = 'none';
       }
       if (noteEl) noteEl.textContent = '✅ Submitted. Check your email for full results with answer breakdown.';
     } else {
