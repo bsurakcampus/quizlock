@@ -1259,7 +1259,14 @@ async function fireAndForget(payload, attempt) {
 
   try {
     const res  = await fetch(scriptUrl, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
-    const json = await res.json();
+    const raw  = await res.text();
+    if (noteEl) noteEl.textContent = '⏳ Server responded — processing...';
+    let json;
+    try { json = JSON.parse(raw); }
+    catch(e) {
+      if (noteEl) noteEl.innerHTML = `⚠️ Could not parse server response.<br><small style="font-family:monospace;font-size:.7rem">${raw.substring(0,200)}</small>`;
+      return;
+    }
     if (json.success) {
       // Show score, hide waiting message
       const scoreDisplay  = document.getElementById('res-score-display');
@@ -1285,10 +1292,10 @@ async function fireAndForget(payload, attempt) {
       if (noteEl) noteEl.textContent = '✅ Check your email for your score and full results.';
     } else {
       if (attempt < MAX_ATTEMPTS) {
-        if (noteEl) noteEl.textContent = `⏳ Retrying... (${attempt}/${MAX_ATTEMPTS})`;
+        if (noteEl) noteEl.textContent = `⏳ Retrying... (${attempt}/${MAX_ATTEMPTS}) — ${json.error || 'no error details'}`;
         setTimeout(() => fireAndForget(payload, attempt + 1), RETRY_DELAY);
       } else {
-        if (noteEl) noteEl.innerHTML = '⚠️ Could not save result. Please show this screen to your tutor.';
+        if (noteEl) noteEl.innerHTML = `⚠️ Server error: ${json.error || 'unknown'}. Please show this screen to your tutor.`;
       }
     }
   } catch(err) {
