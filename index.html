@@ -365,12 +365,12 @@ pre.code-block{background:var(--ink);color:#f0f0f0;padding:1.2rem;border-radius:
 
       <label class="card-label" style="margin-bottom:.6rem">📋 Instructions for Students</label>
       <div class="notice notice-warn" style="margin-bottom:.8rem">
-        <strong>Recommended first line:</strong> Enable Do Not Disturb on your phone before pressing Begin. If you leave this screen for more than 3 seconds, your test will auto-submit with marks obtained so far.
+        <strong>Recommended first line:</strong> Enable Do Not Disturb on your phone before pressing Begin. If you leave this screen for more than 1 second, your test will auto-submit with marks obtained so far.
       </div>
       <textarea id="t-instructions">• This test has 25 questions, 1 mark each.
 • Enable Do Not Disturb on your phone NOW before pressing Begin.
 • Read each question carefully before selecting your answer.
-• Leaving this screen for more than 3 seconds — switching apps, minimising, or pressing Home — will auto-submit your test with marks obtained so far.
+• Leaving this screen for more than 1 second — switching apps, minimising, or pressing Home — will auto-submit your test with marks obtained so far.
 • You cannot change your answers once the test is submitted.
 • You will receive the result in the email you enter here, so please check and enter your email carefully.</textarea>
 
@@ -436,7 +436,7 @@ pre.code-block{background:var(--ink);color:#f0f0f0;padding:1.2rem;border-radius:
 
     <div class="lock-warn">
       <strong>⚠️ Screen Lock is Active</strong>
-      If you leave this screen for more than 3 seconds — switching tabs, minimising, pressing Home, or switching apps — your test will auto-submit with marks obtained so far. Enable <strong>Do Not Disturb</strong> on your phone before you press Begin to silence all notifications.
+      If you leave this screen for more than 1 second — switching tabs, minimising, pressing Home, or switching apps — your test will auto-submit with marks obtained so far. Enable <strong>Do Not Disturb</strong> on your phone before you press Begin to silence all notifications.
     </div>
 
     <div class="entry-form">
@@ -801,7 +801,7 @@ async function saveTestToSheet(test) {
 
 function clearForm() {
   ['t-title','t-date','t-email','t-time'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('t-instructions').value = `• This test has 25 questions, 1 mark each.\n• Enable Do Not Disturb on your phone NOW before pressing Begin.\n• Read each question carefully before selecting your answer.\n• Leaving this screen for more than 3 seconds — switching apps, minimising, or pressing Home — will auto-submit your test with marks obtained so far.\n• You cannot change your answers once the test is submitted.\n• You will receive the result in the email you enter here, so please check and enter your email carefully.`;
+  document.getElementById('t-instructions').value = `• This test has 25 questions, 1 mark each.\n• Enable Do Not Disturb on your phone NOW before pressing Begin.\n• Read each question carefully before selecting your answer.\n• Leaving this screen for more than 1 second — switching apps, minimising, or pressing Home — will auto-submit your test with marks obtained so far.\n• You cannot change your answers once the test is submitted.\n• You will receive the result in the email you enter here, so please check and enter your email carefully.`;
   parsedQs = [];
   const z = document.getElementById('upload-zone');
   z.classList.remove('done');
@@ -1156,7 +1156,7 @@ function tickTimer() {
 // SCREEN LOCK — no warnings, instant submit
 // ══════════════════════════════════════
 let graceTimer = null;
-const GRACE_MS  = 3000; // 3 seconds grace period
+const GRACE_MS  = 1000; // 1 second grace period
 
 function engageLock() {
   locked = true;
@@ -1266,14 +1266,23 @@ async function fireAndForget(payload, attempt) {
       const scoreWaiting  = document.getElementById('res-score-waiting');
       const scoreNum      = document.getElementById('res-score-num');
       const scorePct      = document.getElementById('res-score-pct');
-      if (scoreDisplay && json.score !== undefined) {
-        scoreNum.textContent       = `${json.score}/${json.total}`;
-        scorePct.textContent       = `${json.percent}% — ${json.status}`;
-        scorePct.style.color       = json.percent >= 40 ? 'var(--green)' : 'var(--accent)';
-        scoreDisplay.style.display = 'block';
-        if (scoreWaiting) scoreWaiting.style.display = 'none';
+      // Always hide waiting message
+      if (scoreWaiting) scoreWaiting.style.display = 'none';
+      if (scoreDisplay) {
+        if (json.score !== undefined && json.score !== null) {
+          scoreNum.textContent       = `${json.score}/${json.total}`;
+          scorePct.textContent       = `${json.percent}% — ${json.status}`;
+          scorePct.style.color       = json.percent >= 40 ? 'var(--green)' : 'var(--accent)';
+          scoreDisplay.style.display = 'block';
+        } else {
+          // Score not returned — show generic confirmation
+          scoreNum.textContent       = '✓';
+          scorePct.textContent       = 'Submitted successfully';
+          scorePct.style.color       = 'var(--green)';
+          scoreDisplay.style.display = 'block';
+        }
       }
-      if (noteEl) noteEl.textContent = '✅ Submitted. Check your email for full results with answer breakdown.';
+      if (noteEl) noteEl.textContent = '✅ Check your email for your score and full results.';
     } else {
       if (attempt < MAX_ATTEMPTS) {
         if (noteEl) noteEl.textContent = `⏳ Retrying... (${attempt}/${MAX_ATTEMPTS})`;
