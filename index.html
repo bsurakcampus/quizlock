@@ -330,19 +330,6 @@ pre.code-block{background:var(--ink);color:#f0f0f0;padding:1.2rem;border-radius:
       <p class="text-muted" style="margin-top:.6rem;font-size:.76rem">Tests you create are linked to your email. Only your tests appear in your saved list.</p>
     </div>
 
-    <!-- Script URL -->
-    <div class="card">
-      <div class="card-title">🔗 Google Script
-        <span class="badge badge-green" style="margin-left:auto">Connected ✓</span>
-      </div>
-      <div class="notice notice-success">
-        <strong>✅ Shared portal — ready to use.</strong>
-        This portal is connected to a shared Google Sheet. All tutors' test results are saved automatically. No setup needed.
-      </div>
-      <label class="card-label">Web App URL</label>
-      <input type="url" id="script-url" value="https://script.google.com/macros/s/AKfycbzOLYxaxIYL9tTw4r1-NN8w53gJ7UbjTSaRGEy153n2PxfBJ-b-o6UQ-ZkyF8cn0v6RuA/exec" readonly style="background:var(--cream);color:var(--muted);cursor:not-allowed;font-size:.76rem">
-      <p class="text-muted" style="margin-top:.5rem;font-size:.76rem">⚠️ Please coordinate with colleagues — do not run two tests at the exact same time.</p>
-    </div>
 
     <!-- Create Test -->
     <div class="card">
@@ -662,7 +649,7 @@ function showFetchError(msg) {
   show('s-land');
 }
 
-const HARDCODED_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw3MT22UOT53wEZW7HQu_gT7cxxBcTz5BRkMVy_nhduvBKgnIMM701-Y4xMnfLftwQ3fw/exec';
+const HARDCODED_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwAsT-VwR0UbAncuPWGljA9HLMcyhqIAniq8dVd1YCCI5aYEN1RLaoiYicyzxlsmVp83g/exec';
 function loadScriptUrl() { /* hardcoded — nothing to load */ }
 function saveScriptUrl() { /* hardcoded — nothing to save */ }
 function getScriptUrl() { return HARDCODED_SCRIPT_URL; }
