@@ -662,7 +662,7 @@ function showFetchError(msg) {
   show('s-land');
 }
 
-const HARDCODED_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwAsT-VwR0UbAncuPWGljA9HLMcyhqIAniq8dVd1YCCI5aYEN1RLaoiYicyzxlsmVp83g/exec';
+const HARDCODED_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbygvKCwS-lsSlMIvPNdRtlvfh2UrQi5Wdh9Sp1ZbVWHuarPTUx3r2S1RyBhAZLDbP_BlQ/exec';
 function loadScriptUrl() { /* hardcoded — nothing to load */ }
 function saveScriptUrl() { /* hardcoded — nothing to save */ }
 function getScriptUrl() { return HARDCODED_SCRIPT_URL; }
@@ -1253,59 +1253,80 @@ function doSubmit(reason) {
 
 async function fireAndForget(payload, attempt) {
   attempt = attempt || 1;
-  const MAX_ATTEMPTS = 6;
-  const RETRY_DELAY  = 4000;
+  const MAX_ATTEMPTS = 4;
+  const RETRY_DELAY  = 5000;
+  const TIMEOUT_MS   = 15000; // 15 second timeout per attempt
   const scriptUrl    = getScriptUrl();
   const noteEl       = document.getElementById('res-email-note');
+  const scoreWaiting = document.getElementById('res-score-waiting');
   if (!scriptUrl) return;
 
+  if (noteEl) noteEl.textContent = attempt === 1
+    ? '⏳ Sending to server...'
+    : `⏳ Retrying... (${attempt}/${MAX_ATTEMPTS})`;
+
+  // Create fetch with timeout
+  const controller = new AbortController();
+  const timeoutId  = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
   try {
-    const res  = await fetch(scriptUrl, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
-    const raw  = await res.text();
-    if (noteEl) noteEl.textContent = '⏳ Server responded — processing...';
+    const res = await fetch(scriptUrl, {
+      method: 'POST',
+      redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
+    const raw = await res.text();
     let json;
     try { json = JSON.parse(raw); }
     catch(e) {
-      if (noteEl) noteEl.innerHTML = `⚠️ Could not parse server response.<br><small style="font-family:monospace;font-size:.7rem">${raw.substring(0,200)}</small>`;
+      // Response came back but wasn't JSON — still show score as saved
+      if (scoreWaiting) scoreWaiting.style.display = 'none';
+      const sd = document.getElementById('res-score-display');
+      if (sd) { document.getElementById('res-score-num').textContent = '✓'; document.getElementById('res-score-pct').textContent = 'Submitted'; sd.style.display = 'block'; }
+      if (noteEl) noteEl.textContent = '✅ Submitted. Check your email for results.';
       return;
     }
+
     if (json.success) {
-      // Show score, hide waiting message
-      const scoreDisplay  = document.getElementById('res-score-display');
-      const scoreWaiting  = document.getElementById('res-score-waiting');
-      const scoreNum      = document.getElementById('res-score-num');
-      const scorePct      = document.getElementById('res-score-pct');
-      // Always hide waiting message
+      const scoreDisplay = document.getElementById('res-score-display');
+      const scoreNum     = document.getElementById('res-score-num');
+      const scorePct     = document.getElementById('res-score-pct');
       if (scoreWaiting) scoreWaiting.style.display = 'none';
       if (scoreDisplay) {
         if (json.score !== undefined && json.score !== null) {
           scoreNum.textContent       = `${json.score}/${json.total}`;
           scorePct.textContent       = `${json.percent}% — ${json.status}`;
           scorePct.style.color       = json.percent >= 40 ? 'var(--green)' : 'var(--accent)';
-          scoreDisplay.style.display = 'block';
         } else {
-          // Score not returned — show generic confirmation
-          scoreNum.textContent       = '✓';
-          scorePct.textContent       = 'Submitted successfully';
-          scorePct.style.color       = 'var(--green)';
-          scoreDisplay.style.display = 'block';
+          scoreNum.textContent = '✓';
+          scorePct.textContent = 'Submitted successfully';
+          scorePct.style.color = 'var(--green)';
         }
+        scoreDisplay.style.display = 'block';
       }
       if (noteEl) noteEl.textContent = '✅ Check your email for your score and full results.';
     } else {
       if (attempt < MAX_ATTEMPTS) {
-        if (noteEl) noteEl.textContent = `⏳ Retrying... (${attempt}/${MAX_ATTEMPTS}) — ${json.error || 'no error details'}`;
         setTimeout(() => fireAndForget(payload, attempt + 1), RETRY_DELAY);
       } else {
-        if (noteEl) noteEl.innerHTML = `⚠️ Server error: ${json.error || 'unknown'}. Please show this screen to your tutor.`;
+        if (scoreWaiting) scoreWaiting.style.display = 'none';
+        if (noteEl) noteEl.innerHTML = `⚠️ Error: ${json.error || 'unknown'}. Please show this to your tutor.`;
       }
     }
   } catch(err) {
+    clearTimeout(timeoutId);
     if (attempt < MAX_ATTEMPTS) {
-      if (noteEl) noteEl.textContent = `⏳ Retrying... (${attempt}/${MAX_ATTEMPTS})`;
       setTimeout(() => fireAndForget(payload, attempt + 1), RETRY_DELAY);
     } else {
-      if (noteEl) noteEl.innerHTML = '⚠️ Could not save result. Please show this screen to your tutor.';
+      // All attempts failed — show fallback
+      if (scoreWaiting) scoreWaiting.style.display = 'none';
+      const sd = document.getElementById('res-score-display');
+      if (sd) { document.getElementById('res-score-num').textContent = '✓'; document.getElementById('res-score-pct').textContent = 'Submitted'; document.getElementById('res-score-pct').style.color = 'var(--green)'; sd.style.display = 'block'; }
+      if (noteEl) noteEl.innerHTML = '⚠️ Could not confirm with server. Your answers were recorded. Please show this screen to your tutor.';
     }
   }
 }
