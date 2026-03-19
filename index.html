@@ -662,7 +662,7 @@ function showFetchError(msg) {
   show('s-land');
 }
 
-const HARDCODED_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbygvKCwS-lsSlMIvPNdRtlvfh2UrQi5Wdh9Sp1ZbVWHuarPTUx3r2S1RyBhAZLDbP_BlQ/exec';
+const HARDCODED_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwlIsv7iJHN55g-GJ0IQnzs59skmDHNTV1Fkc8MIPbfKHVrorVJ1erSUGHmI9NcAJ5LjA/exec';
 function loadScriptUrl() { /* hardcoded — nothing to load */ }
 function saveScriptUrl() { /* hardcoded — nothing to save */ }
 function getScriptUrl() { return HARDCODED_SCRIPT_URL; }
@@ -934,7 +934,7 @@ async function releaseResults() {
     const res  = await fetch(scriptUrl, {
       method: 'POST', redirect: 'follow',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'releaseResults', testId: releaseTestId })
+      body: JSON.stringify({ action: 'releaseResults', testId: releaseTestId, testTitle: (getTests().find(t=>t.id===releaseTestId)||{}).title || '' })
     });
     const json = await res.json();
     if (json.success) {
