@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>QuizLock — Classroom MCQ Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root {
+  --ink:#0f0e0d; --paper:#f6f2eb; --cream:#edeae2;
+  --accent:#c8402a; --blue:#1a56c4; --green:#1e7d4a;
+  --warn:#d97706; --muted:#7e7a74; --border:#d4cfc5; --white:#fff;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'Sora',sans-serif;background:var(--paper);color:var(--ink);min-height:100vh}
+.screen{display:none;min-height:100vh;flex-direction:column}
+.screen.active{display:flex}
+
+/* ══ LANDING ══ */
+#s-land{background:var(--ink);color:var(--paper);align-items:center;justify-content:center;position:relative;overflow:hidden}
+#s-land::before{content:'';position:absolute;width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(200,64,42,.2) 0%,transparent 65%);top:-260px;right:-180px;pointer-events:none}
+#s-land::after{content:'';position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(26,86,196,.15) 0%,transparent 65%);bottom:-160px;left:-120px;pointer-events:none}
+.land-wrap{text-align:center;padding:3rem 2rem;position:relative;z-index:1;max-width:520px;width:100%}
+.brand{font-family:'DM Serif Display',serif;font-size:4.2rem;letter-spacing:-2px;line-height:1;margin-bottom:.3rem}
+.brand b{color:var(--accent);font-weight:400}
+.brand-tag{font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.24em;text-transform:uppercase;color:rgba(246,242,235,.4);margin-bottom:3rem}
+.land-btns{display:flex;flex-direction:column;gap:.9rem;align-items:center}
+.btn-hero{width:270px;padding:1.05rem 2rem;border:none;border-radius:5px;font-family:'Sora',sans-serif;font-size:.92rem;font-weight:600;cursor:pointer;transition:all .18s;letter-spacing:.02em}
+.btn-hero.red{background:var(--accent);color:#fff}
+.btn-hero.red:hover{background:#a83320;transform:translateY(-1px);box-shadow:0 6px 20px rgba(200,64,42,.35)}
+.btn-hero.ghost{background:transparent;color:var(--paper);border:1px solid rgba(246,242,235,.22)}
+.btn-hero.ghost:hover{border-color:rgba(246,242,235,.55);background:rgba(246,242,235,.07)}
+
+/* ══ SHARED CHROME ══ */
+.topbar{background:var(--ink);color:var(--paper);padding:1.1rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:1rem}
+.topbar-logo{font-family:'DM Serif Display',serif;font-size:1.35rem}
+.topbar-logo b{color:var(--accent);font-weight:400}
+.panel-body{flex:1;padding:2.5rem 1.5rem;max-width:800px;margin:0 auto;width:100%}
+
+/* ══ CARDS ══ */
+.card{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:2rem;margin-bottom:1.5rem}
+.card-title{font-family:'DM Serif Display',serif;font-size:1.35rem;margin-bottom:1.4rem;padding-bottom:.8rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+.card-label{font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:.4rem;display:block}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1rem}
+.row1{margin-bottom:1rem}
+input[type=text],input[type=email],input[type=number],input[type=url],textarea,select{
+  width:100%;padding:.75rem 1rem;border:1px solid var(--border);border-radius:5px;
+  font-family:'Sora',sans-serif;font-size:.88rem;color:var(--ink);background:var(--paper);
+  outline:none;transition:border-color .18s,background .18s;
+}
+input:focus,textarea:focus,select:focus{border-color:var(--blue);background:#fff}
+textarea{resize:vertical;min-height:110px;line-height:1.65}
+
+/* ══ UPLOAD ══ */
+.upload-zone{border:2px dashed var(--border);border-radius:8px;padding:2.5rem;text-align:center;cursor:pointer;transition:all .2s;position:relative;background:var(--paper)}
+.upload-zone:hover,.upload-zone.over{border-color:var(--blue);background:#f0f4ff}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-icon{font-size:2.8rem;margin-bottom:.6rem;display:block}
+.upload-zone p{color:var(--muted);font-size:.85rem;line-height:1.7}
+.upload-zone.done{border-color:var(--green);background:#f0fff5}
+.upload-zone.done p{color:var(--green);font-weight:600}
+
+/* ══ BUTTONS ══ */
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.8rem 1.8rem;border:none;border-radius:5px;font-family:'Sora',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;transition:all .18s;letter-spacing:.02em;text-decoration:none}
+.btn-red{background:var(--accent);color:#fff}.btn-red:hover{background:#a83320;transform:translateY(-1px)}
+.btn-blue{background:var(--blue);color:#fff}.btn-blue:hover{background:#1244a0;transform:translateY(-1px)}
+.btn-green{background:var(--green);color:#fff}.btn-green:hover{background:#185f38;transform:translateY(-1px)}
+.btn-outline{background:transparent;color:var(--ink);border:1px solid var(--border)}.btn-outline:hover{border-color:var(--ink)}
+.btn-ghost-white{background:transparent;color:var(--paper);border:1px solid rgba(255,255,255,.28)}.btn-ghost-white:hover{border-color:rgba(255,255,255,.6)}
+.btn:disabled{background:var(--muted)!important;cursor:not-allowed;transform:none!important;opacity:.7}
+.btn-row{display:flex;gap:.8rem;flex-wrap:wrap;margin-top:1.5rem}
+.btn-sm{padding:.5rem 1rem;font-size:.78rem}
+
+/* ══ NOTICE ══ */
+.notice{border-radius:7px;padding:.9rem 1.1rem;font-size:.83rem;line-height:1.65;margin-bottom:1rem}
+.notice-warn{background:#fff8ec;border:1px solid #f0c040;color:#7a5400}
+.notice-info{background:#eaf0ff;border:1px solid #a0bcf0;color:#1a3a8a}
+.notice-danger{background:#fdecea;border:1px solid #f0a0a0;color:#7a1a1a}
+.notice-success{background:#eafaf2;border:1px solid #a0dfc0;color:#1a4a2e}
+.notice strong{display:block;margin-bottom:.3rem}
+
+/* ══ BADGE ══ */
+.badge{display:inline-flex;align-items:center;padding:.22rem .65rem;border-radius:20px;font-size:.72rem;font-weight:600;letter-spacing:.04em}
+.badge-red{background:#fdecea;color:var(--accent)}
+.badge-green{background:#eafaf2;color:var(--green)}
+.badge-blue{background:#eaf0ff;color:var(--blue)}
+
+/* ══ QR SCREEN ══ */
+#s-qr{background:var(--ink);color:var(--paper);align-items:center;justify-content:center}
+.qr-card{background:var(--paper);color:var(--ink);border-radius:14px;padding:3rem 2.5rem;text-align:center;max-width:500px;width:92%;box-shadow:0 24px 70px rgba(0,0,0,.45)}
+.qr-card h1{font-family:'DM Serif Display',serif;font-size:1.9rem;margin-bottom:.3rem}
+.qr-meta{font-family:'DM Mono',monospace;font-size:.75rem;color:var(--muted);margin-bottom:1.6rem;line-height:1.9}
+#qr-box{background:#fff;padding:1.2rem;border-radius:8px;display:inline-block;margin-bottom:1.4rem;border:1px solid var(--border)}
+.qr-url{font-family:'DM Mono',monospace;font-size:.68rem;color:var(--muted);word-break:break-all;background:var(--cream);padding:.6rem 1rem;border-radius:5px;margin-bottom:1.4rem}
+.qr-actions{display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap}
+
+/* ══ STUDENT ENTRY ══ */
+#s-entry{background:var(--ink);align-items:center;justify-content:center;padding:1.5rem}
+.entry-card{background:var(--paper);color:var(--ink);border-radius:12px;padding:2.5rem 2rem;max-width:440px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.entry-card h2{font-family:'DM Serif Display',serif;font-size:1.7rem;margin-bottom:.3rem}
+.entry-meta{font-family:'DM Mono',monospace;font-size:.74rem;color:var(--muted);margin-bottom:1.4rem;padding-bottom:1rem;border-bottom:1px solid var(--border);line-height:1.8}
+.instructions-box{background:var(--cream);border-left:3px solid var(--accent);border-radius:0 6px 6px 0;padding:1rem 1.1rem;margin-bottom:1.2rem;font-size:.83rem;line-height:1.75;white-space:pre-wrap;max-height:220px;overflow-y:auto;word-break:break-word}
+.instructions-box strong{display:block;font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:.5rem}
+.field-err{display:block;color:#c8402a;font-size:.75rem;margin-top:.3rem;min-height:.9rem}
+.field-ok{display:block;color:#1e7d4a;font-size:.75rem;margin-top:.3rem;min-height:.9rem}
+.input-err{border-color:#c8402a!important;background:#fff8f8!important}
+.input-ok{border-color:#1e7d4a!important}
+.entry-form label{display:block;font-size:.74rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.35rem}
+.entry-form input{width:100%;padding:.82rem 1rem;border:1px solid var(--border);border-radius:5px;font-family:'Sora',sans-serif;font-size:.93rem;background:#fff;color:var(--ink);outline:none;transition:border-color .18s}
+.entry-form input:focus{border-color:var(--blue)}
+.lock-warn{background:#fff3cd;border:1px solid #f0c040;border-radius:6px;padding:.8rem 1rem;font-size:.79rem;color:#7a5000;margin-bottom:1.2rem;line-height:1.55}
+.lock-warn strong{display:block;margin-bottom:.2rem}
+
+/* ══ QUIZ ══ */
+#s-quiz{background:var(--paper)}
+.quiz-bar{background:var(--ink);color:var(--paper);padding:.9rem 1.5rem;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:sticky;top:0;z-index:200;gap:1rem}
+.quiz-bar-left{font-family:'DM Serif Display',serif;font-size:1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.quiz-bar-right{display:flex;align-items:center;gap:1.2rem;font-family:'DM Mono',monospace;font-size:.8rem;flex-shrink:0}
+.timer{background:var(--accent);padding:.3rem .85rem;border-radius:4px;font-weight:500;font-size:.88rem;min-width:64px;text-align:center;transition:background .3s}
+.timer.warn{background:var(--warn)}
+.timer.hot{background:var(--accent);animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.45}}
+.quiz-body{flex:1;padding:2rem 1.5rem;max-width:780px;margin:0 auto;width:100%}
+.prog-wrap{background:var(--cream);border-radius:20px;height:6px;margin-bottom:2rem;overflow:hidden}
+.prog-fill{height:100%;background:var(--accent);border-radius:20px;transition:width .35s}
+.q-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:1.8rem;margin-bottom:1.2rem;animation:fadeUp .3s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.q-num{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.6rem}
+.q-text{font-size:1rem;font-weight:500;line-height:1.6;margin-bottom:1.3rem}
+.opts{display:flex;flex-direction:column;gap:.6rem}
+.opt{display:flex;align-items:center;gap:.85rem;padding:.85rem 1.1rem;border:1.5px solid var(--border);border-radius:7px;cursor:pointer;transition:all .15s;user-select:none;font-size:.9rem}
+.opt:hover{border-color:var(--blue);background:#f4f7ff}
+.opt.sel{border-color:var(--blue);background:#eaf0ff;font-weight:500}
+.opt-key{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:.75rem;flex-shrink:0;transition:all .15s}
+.opt.sel .opt-key{background:var(--blue);border-color:var(--blue);color:#fff}
+.submit-zone{padding:2rem 1.5rem 3rem;max-width:780px;margin:0 auto;width:100%;text-align:center}
+
+/* ══ RESULT ══ */
+#s-result{background:var(--ink);color:var(--paper);align-items:center;justify-content:center;padding:1.5rem}
+.result-card{background:var(--paper);color:var(--ink);border-radius:14px;padding:3rem 2.5rem;text-align:center;max-width:480px;width:100%;box-shadow:0 24px 70px rgba(0,0,0,.4)}
+.res-score{font-family:'DM Serif Display',serif;font-size:5.5rem;line-height:1;color:var(--accent);margin:.5rem 0 .2rem}
+.res-score span{font-size:2.4rem;color:var(--muted)}
+.res-label{font-size:.78rem;text-transform:uppercase;letter-spacing:.16em;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:1.4rem}
+.res-detail{background:var(--cream);border-radius:7px;padding:1.1rem 1.3rem;text-align:left;font-size:.84rem;line-height:2.1;margin-bottom:1.2rem}
+.res-detail strong{color:var(--muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:.3rem}
+.ans-table{width:100%;border-collapse:collapse;font-size:.82rem;margin-top:1rem}
+.ans-table th{background:var(--ink);color:var(--paper);padding:.6rem .9rem;text-align:left;font-size:.72rem;text-transform:uppercase;letter-spacing:.07em}
+.ans-table td{padding:.65rem .9rem;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.5}
+.ans-table tr:last-child td{border-bottom:none}
+.ans-correct{background:#eafaf2}
+.ans-wrong{background:#fdecea}
+.tag-correct{display:inline-block;background:#1e7d4a;color:#fff;border-radius:3px;padding:.1rem .4rem;font-size:.7rem;font-weight:600;white-space:nowrap}
+.tag-wrong{display:inline-block;background:#c8402a;color:#fff;border-radius:3px;padding:.1rem .4rem;font-size:.7rem;font-weight:600;white-space:nowrap}
+.tag-skip{display:inline-block;background:#7e7a74;color:#fff;border-radius:3px;padding:.1rem .4rem;font-size:.7rem;font-weight:600;white-space:nowrap}
+.res-note{font-size:.76rem;color:var(--muted);line-height:1.6}
+
+/* ══ SAVED TESTS ══ */
+.test-row{background:#fff;border:1px solid var(--border);border-radius:8px;padding:1.2rem 1.5rem;display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;gap:1rem;flex-wrap:wrap}
+.test-row-info h4{font-weight:600;font-size:.92rem;margin-bottom:.2rem}
+.test-row-info p{font-size:.74rem;color:var(--muted);font-family:'DM Mono',monospace;line-height:1.7}
+.test-row-actions{display:flex;gap:.6rem;flex-wrap:wrap}
+
+/* ══ SETUP GUIDE ══ */
+.step{display:flex;gap:1rem;margin-bottom:1.5rem;align-items:flex-start}
+.step-n{width:30px;height:30px;min-width:30px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;font-size:.82rem;display:flex;align-items:center;justify-content:center;margin-top:.1rem}
+.step-b h4{font-weight:600;margin-bottom:.3rem;font-size:.92rem}
+.step-b p{font-size:.83rem;color:var(--muted);line-height:1.65}
+.step-b code{background:var(--cream);padding:.15rem .45rem;border-radius:3px;font-family:'DM Mono',monospace;font-size:.78rem;color:var(--ink);word-break:break-all}
+.divider{border:none;border-top:1px solid var(--border);margin:1.5rem 0}
+pre.code-block{background:var(--ink);color:#f0f0f0;padding:1.2rem;border-radius:7px;font-family:'DM Mono',monospace;font-size:.76rem;overflow-x:auto;line-height:1.7;margin-top:.6rem}
+
+/* ══ MODAL ══ */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;display:none;align-items:center;justify-content:center;padding:1rem}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:12px;padding:2rem;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal h3{font-family:'DM Serif Display',serif;font-size:1.4rem;margin-bottom:.8rem}
+.modal p{font-size:.88rem;line-height:1.6;color:var(--muted);margin-bottom:1.4rem}
+.modal-btns{display:flex;gap:.8rem;justify-content:flex-end}
+
+/* ══ MISC ══ */
+.hidden{display:none!important}
+.text-muted{color:var(--muted);font-size:.83rem}
+.mt1{margin-top:1rem}.mt2{margin-top:2rem}
+.empty-state{text-align:center;padding:3rem 1rem;color:var(--muted)}
+.empty-icon{font-size:3rem;margin-bottom:.8rem;display:block}
+@media(max-width:520px){
+  .row2,.row3{grid-template-columns:1fr}
+  .panel-body{padding:1.5rem 1rem}
+  .card{padding:1.4rem}
+  .brand{font-size:3rem}
+  .res-score{font-size:4rem}
+}
+@media print{
+  body{background:#fff}
+  .qr-card{box-shadow:none;border:1px solid #ccc}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ LANDING ══════════════ -->
+<div id="s-land" class="screen active">
+  <div class="land-wrap">
+    <div class="brand">Quiz<b>Lock</b></div>
+    <div class="brand-tag">Classroom MCQ Testing Portal</div>
+    <div class="land-btns">
+      <button class="btn-hero red" onclick="show('s-tutor')">🎓 Tutor Portal</button>
+    </div>
+    <p style="margin-top:2.5rem;font-size:.7rem;color:rgba(246,242,235,.25);font-family:'DM Mono',monospace;line-height:1.8">
+      Students join via QR code · No app needed · Works on any device
+    </p>
+  </div>
+</div>
+
+<!-- ══════════════ TUTOR PORTAL ══════════════ -->
+<div id="s-tutor" class="screen">
+  <div class="topbar">
+    <div class="topbar-logo">Quiz<b>Lock</b> <span style="font-size:.72rem;font-family:'DM Mono',monospace;opacity:.4;margin-left:.5rem">Tutor Portal</span></div>
+    <div style="display:flex;gap:.6rem">
+      <button class="btn btn-ghost-white btn-sm" onclick="show('s-land')">← Home</button>
+    </div>
+  </div>
+  <div class="panel-body">
+
+    <!-- How to Use -->
+    <div class="card" style="border-color:#d4cfc5">
+      <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="toggleHowTo()">
+        <div style="font-family:'DM Serif Display',serif;font-size:1.2rem">📖 How to Use QuizLock</div>
+        <span id="howto-chevron" style="font-size:1.2rem;transition:transform .2s">▼</span>
+      </div>
+      <div id="howto-body" style="display:none;margin-top:1.4rem;border-top:1px solid var(--border);padding-top:1.4rem">
+
+        <div style="margin-bottom:1.4rem">
+          <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:.8rem">Before Your Class</div>
+          <div style="font-size:.86rem;line-height:1.9;color:var(--ink)">
+            <div style="margin-bottom:.4rem">1. Enter your name and email at the top of this page — this links all your tests to your account so only you see them in the saved list.</div>
+            <div style="margin-bottom:.4rem">2. Prepare your Excel question file. Row 1 is a header row and is ignored. Data starts from row 2:</div>
+            <div style="overflow-x:auto;margin:.6rem 0 .8rem">
+              <table style="width:100%;border-collapse:collapse;font-size:.78rem">
+                <thead><tr style="background:var(--ink);color:#fff">
+                  <th style="padding:.5rem .8rem;text-align:left">Col A — Question</th>
+                  <th style="padding:.5rem .8rem;text-align:left">Col B — Option 1</th>
+                  <th style="padding:.5rem .8rem;text-align:left">Col C — Option 2</th>
+                  <th style="padding:.5rem .8rem;text-align:left">Col D — Option 3</th>
+                  <th style="padding:.5rem .8rem;text-align:left">Col E — Option 4</th>
+                  <th style="padding:.5rem .8rem;text-align:left">Col F — Correct</th>
+                </tr></thead>
+                <tbody><tr style="background:var(--cream)">
+                  <td style="padding:.5rem .8rem;border-bottom:1px solid var(--border)">Your question here</td>
+                  <td style="padding:.5rem .8rem;border-bottom:1px solid var(--border)">Option A</td>
+                  <td style="padding:.5rem .8rem;border-bottom:1px solid var(--border)">Option B</td>
+                  <td style="padding:.5rem .8rem;border-bottom:1px solid var(--border)">Option C</td>
+                  <td style="padding:.5rem .8rem;border-bottom:1px solid var(--border)">Option D</td>
+                  <td style="padding:.5rem .8rem;border-bottom:1px solid var(--border);font-weight:700;color:var(--green)">2</td>
+                </tr></tbody>
+              </table>
+            </div>
+            <div style="margin-bottom:.4rem">Col F must be the number <strong>1, 2, 3 or 4</strong> — indicating which option is correct. Maximum 25 questions per test.</div>
+            <div style="margin-top:.8rem">
+              <button class="btn btn-blue btn-sm" onclick="downloadTemplate()" style="font-size:.82rem">
+                ⬇ Download Question Template (.xlsx)
+              </button>
+            </div>
+            <div style="margin-bottom:.4rem">3. Fill in the test title, date, your email, and time limit. Edit the default instructions if needed.</div>
+            <div>4. Upload your Excel file and click <strong>Generate QR Code</strong>. The test is saved automatically.</div>
+          </div>
+        </div>
+
+        <hr style="border:none;border-top:1px solid var(--border);margin:1rem 0">
+
+        <div style="margin-bottom:1.4rem">
+          <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:.8rem">In Class</div>
+          <div style="font-size:.86rem;line-height:1.9;color:var(--ink)">
+            <div style="margin-bottom:.4rem">1. Project the QR code on your classroom screen.</div>
+            <div style="margin-bottom:.4rem">2. Ask students to enable <strong>Do Not Disturb</strong> on their phones before scanning.</div>
+            <div style="margin-bottom:.4rem">3. Students scan the QR, enter their full name and university email, and press Begin.</div>
+            <div style="margin-bottom:.4rem">4. The screen locks immediately. Switching apps, minimising, or pressing Home will auto-submit the test with marks obtained so far.</div>
+            <div style="margin-bottom:.4rem">5. The timer counts down on screen. The test auto-submits when time runs out.</div>
+            <div>6. Students see a confirmation screen and receive their score and pass/fail by email automatically.</div>
+          </div>
+        </div>
+
+        <hr style="border:none;border-top:1px solid var(--border);margin:1rem 0">
+
+        <div style="margin-bottom:1.4rem">
+          <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:.8rem">After Class</div>
+          <div style="font-size:.86rem;line-height:1.9;color:var(--ink)">
+            <div style="margin-bottom:.4rem">• Click <strong>📧 Summary</strong> on any saved test to receive a full class report by email — class average, highest and lowest scores, and a list of any students auto-submitted for leaving the screen.</div>
+            <div style="margin-bottom:.4rem">• If you teach the same test across multiple groups on different days, <strong>do not click Release Results yet</strong>. Students receive only their score after each session — not the correct answers — so there is nothing to share with the next group.</div>
+            <div>• Once <strong>all groups</strong> have sat the test, click <strong>🔓 Release Results</strong>. Every student who submitted will receive a second email with the full list of correct answers. This cannot be undone.</div>
+          </div>
+        </div>
+
+        <hr style="border:none;border-top:1px solid var(--border);margin:1rem 0">
+
+        <div>
+          <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:.8rem">Important Notes</div>
+          <div style="font-size:.86rem;line-height:1.9;color:var(--ink)">
+            <div style="margin-bottom:.4rem">• Results are saved in a Google Sheet called <strong>QuizLock Results</strong> in the Google Drive of the account that deployed the Apps Script. Each test gets its own tab named after the test title.</div>
+            <div style="margin-bottom:.4rem">• Students cannot retake a test on the same device. If a student has a genuine technical issue, ask them to try a different browser or speak to you directly.</div>
+            <div style="margin-bottom:.4rem">• If a student's submission fails due to a connection issue, the portal retries automatically. If it still fails, they will see a message asking them to show you their screen.</div>
+            <div style="margin-bottom:.4rem">• The pass mark is <strong>40%</strong>.</div>
+            <div>• Please coordinate with colleagues — do not run two tests at exactly the same time as all tutors share the same Google Sheet.</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Tutor Identity -->
+    <div class="card" id="tutor-id-card">
+      <div class="card-title">👤 Your Identity</div>
+      <div style="display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap">
+        <div style="flex:1;min-width:200px">
+          <label class="card-label">Your Email Address</label>
+          <input type="email" id="tutor-identity-email" placeholder="e.g. iftikhar@bathspa.ae" oninput="saveTutorIdentity()" autocomplete="email">
+        </div>
+        <div style="flex:1;min-width:200px">
+          <label class="card-label">Your Name</label>
+          <input type="text" id="tutor-identity-name" placeholder="e.g. Iftikhar K" oninput="saveTutorIdentity()">
+        </div>
+      </div>
+      <p class="text-muted" style="margin-top:.6rem;font-size:.76rem">Tests you create are linked to your email. Only your tests appear in your saved list.</p>
+    </div>
+
+    <!-- Script URL -->
+    <div class="card">
+      <div class="card-title">🔗 Google Script
+        <span class="badge badge-green" style="margin-left:auto">Connected ✓</span>
+      </div>
+      <div class="notice notice-success">
+        <strong>✅ Shared portal — ready to use.</strong>
+        This portal is connected to a shared Google Sheet. All tutors' test results are saved automatically. No setup needed.
+      </div>
+      <label class="card-label">Web App URL</label>
+      <input type="url" id="script-url" value="https://script.google.com/macros/s/AKfycbzOLYxaxIYL9tTw4r1-NN8w53gJ7UbjTSaRGEy153n2PxfBJ-b-o6UQ-ZkyF8cn0v6RuA/exec" readonly style="background:var(--cream);color:var(--muted);cursor:not-allowed;font-size:.76rem">
+      <p class="text-muted" style="margin-top:.5rem;font-size:.76rem">⚠️ Please coordinate with colleagues — do not run two tests at the exact same time.</p>
+    </div>
+
+    <!-- Create Test -->
+    <div class="card">
+      <div class="card-title">✏️ Create New Test</div>
+
+      <div class="row2">
+        <div><label class="card-label">Test Title</label>
+        <input type="text" id="t-title" placeholder="e.g. Week 5 — Principles of Design"></div>
+        <div><label class="card-label">Test Date</label>
+        <input type="text" id="t-date" placeholder="e.g. 19 March 2026"></div>
+      </div>
+      <div class="row2">
+        <div><label class="card-label">Tutor Email (summary sent here)</label>
+        <input type="email" id="t-email" placeholder="iftikhar@bathspa.ae"></div>
+        <div><label class="card-label">Time Limit (minutes)</label>
+        <input type="number" id="t-time" placeholder="e.g. 20" min="1" max="120"></div>
+      </div>
+
+      <hr style="border:none;border-top:1px solid var(--border);margin:1.4rem 0">
+
+      <label class="card-label" style="margin-bottom:.6rem">📋 Instructions for Students</label>
+      <div class="notice notice-warn" style="margin-bottom:.8rem">
+        <strong>Recommended first line:</strong> Enable Do Not Disturb on your phone before pressing Begin. Any attempt to leave this screen will immediately auto-submit with marks obtained so far.
+      </div>
+      <textarea id="t-instructions">• This test has 25 questions, 1 mark each.
+• Enable Do Not Disturb on your phone NOW before pressing Begin.
+• Read each question carefully before selecting your answer.
+• Leaving this screen at any point — switching apps, minimising, or pressing Home — will immediately auto-submit your test with marks obtained so far.
+• You cannot change your answers once the test is submitted.
+• You will receive the result in the email you enter here, so please check and enter your email carefully.</textarea>
+
+      <hr style="border:none;border-top:1px solid var(--border);margin:1.4rem 0">
+
+      <label class="card-label" style="margin-bottom:.7rem">📁 Upload Question File (Excel)</label>
+      <div class="upload-zone" id="upload-zone">
+        <input type="file" id="file-input" accept=".xlsx,.xls" onchange="handleFile(this)">
+        <span class="upload-icon">📊</span>
+        <p><strong>Click to upload</strong> or drag and drop your Excel file<br>
+        Row 1 = headers (ignored) &nbsp;|&nbsp; Col A = Question &nbsp;|&nbsp; Cols B–E = Options &nbsp;|&nbsp; Col F = Correct (1–4)<br>
+        Maximum 25 questions per test</p>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-red" onclick="createTest()">Generate QR Code →</button>
+        <button class="btn btn-outline" onclick="clearForm()">Clear Form</button>
+      </div>
+    </div>
+
+    <!-- Saved Tests -->
+    <div class="card">
+      <div class="card-title">📚 Saved Tests</div>
+      <div id="saved-list">
+        <div class="empty-state">
+          <span class="empty-icon">📭</span>
+          <p>No tests saved yet.<br>Create a test above — it will appear here with its QR code.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════ QR SCREEN ══════════════ -->
+<div id="s-qr" class="screen">
+  <div id="s-qr-inner" style="display:flex;align-items:center;justify-content:center;flex:1;background:var(--ink);padding:1.5rem">
+    <div class="qr-card">
+      <div style="font-size:1.8rem;margin-bottom:.5rem">📱</div>
+      <h1 id="qr-title">Test Title</h1>
+      <div class="qr-meta" id="qr-meta"></div>
+      <div id="qr-box"></div>
+      <div class="qr-url" id="qr-url-text"></div>
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:1.4rem">Project this on your classroom screen. Students scan to begin.</p>
+      <div class="qr-actions">
+        <button class="btn btn-blue" onclick="window.print()">🖨️ Print / Save PDF</button>
+        <button class="btn btn-outline" onclick="show('s-tutor')">← Back to Portal</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ STUDENT ENTRY ══════════════ -->
+<div id="s-entry" class="screen">
+  <div class="entry-card" style="margin:auto">
+    <h2 id="entry-title">Test</h2>
+    <div class="entry-meta" id="entry-meta"></div>
+
+    <div id="entry-instructions" class="instructions-box" style="display:none">
+      <strong>📋 Instructions from your tutor</strong>
+      <span id="entry-instr-text"></span>
+    </div>
+
+    <div class="lock-warn">
+      <strong>⚠️ Screen Lock is Active</strong>
+      Leaving this screen at any point — switching tabs, minimising, pressing Home, or switching apps — will immediately auto-submit your test with marks obtained so far. Enable <strong>Do Not Disturb</strong> on your phone before you press Begin to silence all notifications.
+    </div>
+
+    <div class="entry-form">
+      <div class="fgrp"><label>Your Full Name</label>
+      <input type="text" id="s-name" placeholder="e.g. Ahmed Al Mansoori" autocomplete="name" oninput="clearErr('err-name')">
+      <span class="field-err" id="err-name"></span></div>
+      <div class="fgrp" style="margin-top:.9rem"><label>Your Email Address (result sent here)</label>
+      <input type="email" id="s-email" placeholder="e.g. student@bathspa.ae" autocomplete="email" oninput="validateEmailLive()">
+      <span class="field-err" id="err-email"></span>
+      <span class="field-ok" id="ok-email"></span></div>
+    </div>
+    <button class="btn btn-red" style="width:100%;justify-content:center;margin-top:1.2rem;padding:1rem" onclick="startQuiz()">Begin Test →</button>
+  </div>
+</div>
+
+<!-- ══════════════ QUIZ ══════════════ -->
+<div id="s-quiz" class="screen">
+  <div class="quiz-bar">
+    <div class="quiz-bar-left" id="qbar-title">Quiz</div>
+    <div class="quiz-bar-right">
+      <span id="qbar-progress" style="opacity:.7">0/0 answered</span>
+      <span class="timer" id="timer">--:--</span>
+    </div>
+  </div>
+  <div class="quiz-body">
+    <div class="prog-wrap"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+    <div id="q-container"></div>
+  </div>
+  <div class="submit-zone">
+    <button class="btn btn-red" style="font-size:1rem;padding:1.1rem 3.5rem" onclick="confirmSubmit()">Submit Test</button>
+    <p class="text-muted" style="margin-top:.8rem;font-size:.78rem">Review all answers above before submitting.</p>
+  </div>
+</div>
+
+<!-- ══════════════ RESULT ══════════════ -->
+<div id="s-result" class="screen">
+  <div style="display:flex;align-items:center;justify-content:center;flex:1;padding:1.5rem;background:var(--ink)">
+    <div class="result-card" style="text-align:center">
+      <div style="font-size:3.5rem;margin-bottom:1rem">✅</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:2rem;color:var(--ink);margin-bottom:.5rem">Test Submitted</div>
+      <div style="font-size:.8rem;text-transform:uppercase;letter-spacing:.15em;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:1.8rem">Your answers have been received</div>
+      <div style="background:var(--cream);border-radius:8px;padding:1.4rem 1.6rem;margin-bottom:1.4rem;text-align:left;font-size:.88rem;line-height:2">
+        <div>Student: <strong id="res-name">—</strong></div>
+        <div>Test: <strong id="res-title">—</strong></div>
+        <div>Date: <strong id="res-date">—</strong></div>
+        <div>Submitted: <strong id="res-reason">—</strong></div>
+      </div>
+      <div style="background:#eaf0ff;border:1px solid #a0bcf0;border-radius:8px;padding:1.1rem 1.4rem;font-size:.88rem;color:#1a3a8a;line-height:1.7;margin-bottom:.8rem">
+        📧 Your full result with correct answers will be emailed to<br>
+        <strong id="res-email-display">your email address</strong>
+      </div>
+      <div id="res-email-note" class="res-note" style="font-size:.76rem;color:var(--muted);margin-top:.5rem"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ SUMMARY MODAL ══════════════ -->
+<div class="modal-bg" id="summary-modal">
+  <div class="modal">
+    <h3>Send Summary Email</h3>
+    <p>This will send a full results summary to <strong id="summary-tutor-email">your email</strong>, including the complete results table, class statistics, and list of students who were auto-submitted.</p>
+    <div style="margin-bottom:1rem">
+      <label class="card-label">Test</label>
+      <select id="summary-test-select" style="margin-top:.3rem"></select>
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-outline" onclick="closeSummaryModal()">Cancel</button>
+      <button class="btn btn-green" id="summary-send-btn" onclick="sendSummary()">Send Summary</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ RELEASE RESULTS MODAL ══════════════ -->
+<div class="modal-bg" id="release-modal">
+  <div class="modal">
+    <h3>🔓 Release Results</h3>
+    <p>This will send the <strong>full answer breakdown</strong> to every student who submitted <strong id="release-test-name">this test</strong>. Use this only after all groups have completed the test.</p>
+    <div class="notice notice-warn" style="margin-bottom:1rem">
+      <strong>⚠️ This cannot be undone.</strong> All students who submitted will receive the breakdown email immediately.
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-outline" onclick="closeReleaseModal()">Cancel</button>
+      <button class="btn btn-red" id="release-send-btn" onclick="releaseResults()">Send Breakdown to All Students</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ SUBMIT CONFIRM MODAL ══════════════ -->
+<div class="modal-bg" id="confirm-modal">
+  <div class="modal">
+    <h3>Submit Test?</h3>
+    <p id="confirm-body">Are you sure you want to submit?</p>
+    <div class="modal-btns">
+      <button class="btn btn-outline" onclick="closeConfirm()">Cancel</button>
+      <button class="btn btn-red" onclick="doSubmit('Manual submission')">Yes, Submit</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════
+// STATE
+// ══════════════════════════════════════
+let currentTest = null;
+let studentName = '', studentEmail = '';
+let answers = {};
+let timerInt = null;
+let timeLeft = 0;
+let locked = false;
+let submitted = false;
+
+// ══════════════════════════════════════
+// SCREENS
+// ══════════════════════════════════════
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// ══════════════════════════════════════
+// INIT
+// ══════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  loadScriptUrl();
+  loadTutorIdentity();
+  renderSavedTests();
+
+  // QR routing — student arrives via scanned URL, fetch test from server
+  const params = new URLSearchParams(window.location.search);
+  const tid = params.get('test');
+  if (tid) {
+    // Check if already attempted on this device first
+    const prior = localStorage.getItem('ql_attempted_' + tid);
+    if (prior) {
+      const p = JSON.parse(prior);
+      document.getElementById('s-land').innerHTML = `
+        <div style="text-align:center;color:var(--paper);padding:2rem;max-width:400px">
+          <div style="font-size:3rem;margin-bottom:1rem">🔒</div>
+          <h2 style="font-family:'DM Serif Display',serif;margin-bottom:.8rem">Already Attempted</h2>
+          <p style="opacity:.7;font-size:.88rem;line-height:1.8">
+            This test was already submitted from this device.<br><br>
+            <strong>${p.name}</strong><br>
+            Submitted: <strong>${p.at}</strong><br><br>
+            <span style="opacity:.5;font-size:.78rem">If you believe this is an error, please speak to your tutor.</span>
+          </p>
+        </div>`;
+      show('s-land');
+      return;
+    }
+    document.getElementById('s-land').innerHTML = `
+      <div style="text-align:center;color:var(--paper)">
+        <div style="font-size:2rem;margin-bottom:1rem">⏳</div>
+        <p style="font-family:'DM Mono',monospace;font-size:.85rem;opacity:.6">Loading your test...</p>
+      </div>`;
+    show('s-land');
+    fetchTest(tid);
+  }
+});
+
+// ══════════════════════════════════════
+// FETCH TEST FROM GOOGLE SHEETS (student)
+// ══════════════════════════════════════
+
+// ══════════════════════════════════════
+// FETCH TEST FROM SERVER
+// ══════════════════════════════════════
+function fetchTest(testId, attempt) {
+  attempt = attempt || 1;
+  const MAX  = 5;
+  const WAIT = 3000;
+  const scriptUrl = getScriptUrl();
+
+  fetch(scriptUrl, {
+    method: 'POST',
+    redirect: 'follow',
+    body: JSON.stringify({ action: 'getTest', testId: testId })
+  })
+  .then(r => r.json())
+  .then(json => {
+    if (json.success && json.test) {
+      currentTest = json.test; // full test with correct answers — scoring is client-side
+      loadEntry(json.test);
+      show('s-entry');
+    } else {
+      showFetchError(json.error || 'Test not found. Ask your tutor to regenerate the QR code.');
+    }
+  })
+  .catch(() => {
+    if (attempt < MAX) {
+      document.getElementById('s-land').innerHTML = `
+        <div style="text-align:center;color:var(--paper)">
+          <div style="font-size:2rem;margin-bottom:1rem">⏳</div>
+          <p style="font-family:'DM Mono',monospace;font-size:.85rem;opacity:.6">Connecting... (${attempt}/${MAX})</p>
+        </div>`;
+      show('s-land');
+      setTimeout(() => fetchTest(testId, attempt + 1), WAIT);
+    } else {
+      showFetchError('Could not reach server after several attempts.<br>Check your internet connection and scan the QR code again.');
+    }
+  });
+}
+
+function showFetchError(msg) {
+  document.getElementById('s-land').innerHTML = `
+    <div style="text-align:center;color:var(--paper);padding:2rem;max-width:400px">
+      <div style="font-size:3rem;margin-bottom:1rem">📶</div>
+      <h2 style="font-family:'DM Serif Display',serif;margin-bottom:.8rem">Connection Error</h2>
+      <p style="opacity:.6;font-size:.88rem;line-height:1.6">${msg}</p>
+    </div>`;
+  show('s-land');
+}
+
+const HARDCODED_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwAsT-VwR0UbAncuPWGljA9HLMcyhqIAniq8dVd1YCCI5aYEN1RLaoiYicyzxlsmVp83g/exec';
+function loadScriptUrl() { /* hardcoded — nothing to load */ }
+function saveScriptUrl() { /* hardcoded — nothing to save */ }
+function getScriptUrl() { return HARDCODED_SCRIPT_URL; }
+
+const TEMPLATE_B64 = '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';
+
+function downloadTemplate() {
+  const byteChars = atob(TEMPLATE_B64);
+  const byteNums  = new Array(byteChars.length);
+  for (let i = 0; i < byteChars.length; i++) byteNums[i] = byteChars.charCodeAt(i);
+  const bytes = new Uint8Array(byteNums);
+  const blob  = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url   = URL.createObjectURL(blob);
+  const a     = document.createElement('a');
+  a.href      = url;
+  a.download  = 'QuizLock_Question_Template.xlsx';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function toggleHowTo() {
+  const body    = document.getElementById('howto-body');
+  const chevron = document.getElementById('howto-chevron');
+  const open    = body.style.display === 'none';
+  body.style.display    = open ? 'block' : 'none';
+  chevron.style.transform = open ? 'rotate(180deg)' : 'rotate(0deg)';
+}
+
+// ══════════════════════════════════════
+// TUTOR IDENTITY
+// ══════════════════════════════════════
+function loadTutorIdentity() {
+  const email = localStorage.getItem('tutor_email') || '';
+  const name  = localStorage.getItem('tutor_name')  || '';
+  document.getElementById('tutor-identity-email').value = email;
+  document.getElementById('tutor-identity-name').value  = name;
+  // Pre-fill tutor email in test form
+  if (email && !document.getElementById('t-email').value) {
+    document.getElementById('t-email').value = email;
+  }
+}
+function saveTutorIdentity() {
+  const email = document.getElementById('tutor-identity-email').value.trim();
+  const name  = document.getElementById('tutor-identity-name').value.trim();
+  localStorage.setItem('tutor_email', email);
+  localStorage.setItem('tutor_name',  name);
+  // Keep tutor email in sync with test form
+  if (email) document.getElementById('t-email').value = email;
+  renderSavedTests(); // re-filter by new email
+}
+function getTutorEmail() {
+  return localStorage.getItem('tutor_email') || '';
+}
+
+// ══════════════════════════════════════
+// FILE UPLOAD
+// ══════════════════════════════════════
+let parsedQs = [];
+function handleFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, { type:'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
+      parsedQs = [];
+      for (let i = 1; i < Math.min(data.length, 26); i++) {
+        const r = data[i];
+        if (!r[0]) continue;
+        const c = parseInt(r[5]);
+        if (c < 1 || c > 4) { alert(`Row ${i+1}: Column F must be 1, 2, 3 or 4. Found: "${r[5]}"`); parsedQs=[]; return; }
+        parsedQs.push({ q: String(r[0]).trim(), opts: [String(r[1]).trim(), String(r[2]).trim(), String(r[3]).trim(), String(r[4]).trim()], correct: c });
+      }
+      if (!parsedQs.length) { alert('No valid questions found. Check your Excel file.'); return; }
+      const z = document.getElementById('upload-zone');
+      z.classList.add('done');
+      z.querySelector('p').innerHTML = `✅ <strong>${parsedQs.length} questions loaded</strong> from "${file.name}"`;
+    } catch(err) { alert('Could not read file. Ensure it is a valid .xlsx or .xls file.\n' + err.message); }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ══════════════════════════════════════
+// CREATE TEST
+// ══════════════════════════════════════
+function createTest() {
+  const title       = document.getElementById('t-title').value.trim();
+  const date        = document.getElementById('t-date').value.trim();
+  const email       = document.getElementById('t-email').value.trim();
+  const tutorName   = localStorage.getItem('tutor_name') || '';
+  const time        = parseInt(document.getElementById('t-time').value);
+  const instructions= document.getElementById('t-instructions').value.trim();
+
+  if (!title)                       { alert('Please enter a test title.'); return; }
+  if (!date)                        { alert('Please enter the test date.'); return; }
+  if (!email || !email.includes('@')){ alert('Please enter a valid tutor email.'); return; }
+  if (!time || time < 1)            { alert('Please enter a valid time limit.'); return; }
+  if (!parsedQs.length)             { alert('Please upload your question Excel file first.'); return; }
+
+  const id   = 'ql' + Date.now();
+  const test = { id, title, date, email, tutorName, time, instructions, questions: parsedQs, created: new Date().toLocaleString() };
+
+  // Save to localStorage for tutor's saved list
+  const tests = getTests();
+  tests.unshift(test);
+  localStorage.setItem('ql_tests', JSON.stringify(tests));
+  renderSavedTests();
+
+  // Save to Google Sheets so any student device can fetch it
+  saveTestToSheet(test);
+  buildQR(test);
+}
+
+async function saveTestToSheet(test) {
+  const scriptUrl = getScriptUrl();
+  if (!scriptUrl) return;
+  try {
+    await fetch(scriptUrl, {
+      method: 'POST',
+      redirect: 'follow',
+      body: JSON.stringify({
+        action: 'saveTest',
+        id: test.id, title: test.title, date: test.date,
+        email: test.email, time: test.time,
+        instructions: test.instructions,
+        questions: test.questions
+      })
+    });
+  } catch(err) {
+    console.error('Could not save test to Google Sheets:', err);
+  }
+}
+
+function clearForm() {
+  ['t-title','t-date','t-email','t-time'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('t-instructions').value = `• This test has 25 questions, 1 mark each.\n• Enable Do Not Disturb on your phone NOW before pressing Begin.\n• Read each question carefully before selecting your answer.\n• Leaving this screen at any point — switching apps, minimising, or pressing Home — will immediately auto-submit your test with marks obtained so far.\n• You cannot change your answers once the test is submitted.\n• You will receive the result in the email you enter here, so please check and enter your email carefully.`;
+  parsedQs = [];
+  const z = document.getElementById('upload-zone');
+  z.classList.remove('done');
+  z.querySelector('p').innerHTML = '<strong>Click to upload</strong> or drag and drop your Excel file<br>Row 1 = headers (ignored) &nbsp;|&nbsp; Col A = Question &nbsp;|&nbsp; Cols B–E = Options &nbsp;|&nbsp; Col F = Correct (1–4)<br>Maximum 25 questions per test';
+  document.getElementById('file-input').value = '';
+}
+
+// ══════════════════════════════════════
+// QR CODE
+// ══════════════════════════════════════
+function buildQR(test) {
+  const base = window.location.origin + window.location.pathname;
+  const url  = base + '?test=' + test.id;
+
+  document.getElementById('qr-title').textContent = test.title;
+  document.getElementById('qr-meta').innerHTML = `📅 ${test.date} &nbsp;·&nbsp; ⏱ ${test.time} mins &nbsp;·&nbsp; ❓ ${test.questions.length} questions &nbsp;·&nbsp; 1 mark each`;
+  document.getElementById('qr-url-text').textContent = url;
+
+  const box = document.getElementById('qr-box');
+  box.innerHTML = '';
+  new QRCode(box, { text: url, width: 230, height: 230, colorDark: '#0f0e0d', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H });
+
+  show('s-qr');
+}
+
+// ══════════════════════════════════════
+// SAVED TESTS
+// ══════════════════════════════════════
+function getTests() {
+  try {
+    const all   = JSON.parse(localStorage.getItem('ql_tests')) || [];
+    const email = getTutorEmail();
+    // If tutor email set, only show their tests; otherwise show all
+    return email ? all.filter(t => t.email === email) : all;
+  } catch { return []; }
+}
+function renderSavedTests() {
+  const tests = getTests();
+  const el = document.getElementById('saved-list');
+  if (!tests.length) {
+    el.innerHTML = `<div class="empty-state"><span class="empty-icon">📭</span><p>No tests saved yet.<br>Create a test above — it will appear here.</p></div>`;
+    return;
+  }
+  el.innerHTML = tests.map(t => `
+    <div class="test-row">
+      <div class="test-row-info">
+        <h4>${esc(t.title)} ${t.resultsReleased ? '<span class="badge badge-green" style="font-size:.68rem">Results Released</span>' : ''}</h4>
+        <p>📅 ${t.date} &nbsp;·&nbsp; ⏱ ${t.time} mins &nbsp;·&nbsp; ❓ ${t.questions.length} questions &nbsp;·&nbsp; Created: ${t.created}</p>
+      </div>
+      <div class="test-row-actions">
+        <button class="btn btn-blue btn-sm" onclick='buildQR(getTests().find(x=>x.id=="${t.id}"))'>Show QR</button>
+        <button class="btn btn-green btn-sm" onclick='openSummaryModal("${t.id}")'>📧 Summary</button>
+        ${t.resultsReleased
+          ? '<span class="badge badge-green btn-sm" style="padding:.5rem 1rem">✓ Released</span>'
+          : `<button class="btn btn-red btn-sm" onclick='openReleaseModal("${t.id}")'>🔓 Release Results</button>`}
+        <button class="btn btn-outline btn-sm" onclick='downloadCSV("${t.id}","${t.title.replace(/"/g,"")}")'>⬇ CSV</button>
+        <button class="btn btn-outline btn-sm" onclick='deleteTest("${t.id}")'>Delete</button>
+      </div>
+    </div>`).join('');
+}
+function deleteTest(id) {
+  if (!confirm('Delete this test? This cannot be undone.')) return;
+  localStorage.setItem('ql_tests', JSON.stringify(getTests().filter(t => t.id !== id)));
+  renderSavedTests();
+}
+
+// ══════════════════════════════════════
+// DOWNLOAD CSV
+// ══════════════════════════════════════
+async function downloadCSV(testId, testTitle) {
+  const scriptUrl = getScriptUrl();
+  if (!scriptUrl) { alert('Script URL not configured.'); return; }
+
+  const btn = event.target;
+  btn.disabled = true;
+  btn.textContent = '⏳ Fetching...';
+
+  try {
+    const res  = await fetch(scriptUrl, {
+      method: 'POST', redirect: 'follow',
+      body: JSON.stringify({ action: 'getCSV', testId })
+    });
+    const json = await res.json();
+    if (json.success && json.csv) {
+      // Trigger browser download
+      const blob = new Blob([json.csv], { type: 'text/csv;charset=utf-8;' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = testTitle.replace(/[^a-z0-9]/gi, '_') + '_results.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } else {
+      alert(json.error || 'No results found for this test yet.');
+    }
+  } catch(err) {
+    alert('Could not reach server. Please try again.');
+  }
+  btn.disabled = false;
+  btn.textContent = '⬇ CSV';
+}
+
+// ══════════════════════════════════════
+// RELEASE RESULTS
+// ══════════════════════════════════════
+let releaseTestId = null;
+function openReleaseModal(testId) {
+  releaseTestId = testId;
+  const test = getTests().find(t => t.id === testId)
+             || JSON.parse(localStorage.getItem('ql_tests')||'[]').find(t => t.id === testId);
+  document.getElementById('release-test-name').textContent = test ? test.title : 'this test';
+  document.getElementById('release-modal').classList.add('open');
+}
+function closeReleaseModal() {
+  document.getElementById('release-modal').classList.remove('open');
+  releaseTestId = null;
+}
+async function releaseResults() {
+  const scriptUrl = getScriptUrl();
+  if (!scriptUrl) { alert('Script URL not configured.'); return; }
+  const btn = document.getElementById('release-send-btn');
+  btn.disabled = true;
+  btn.textContent = 'Sending...';
+  try {
+    const res  = await fetch(scriptUrl, {
+      method: 'POST', redirect: 'follow',
+      body: JSON.stringify({ action: 'releaseResults', testId: releaseTestId })
+    });
+    const json = await res.json();
+    if (json.success) {
+      // Mark test as released in localStorage
+      const all = JSON.parse(localStorage.getItem('ql_tests') || '[]');
+      const idx = all.findIndex(t => t.id === releaseTestId);
+      if (idx !== -1) { all[idx].resultsReleased = true; localStorage.setItem('ql_tests', JSON.stringify(all)); }
+      alert(`✅ ${json.message}`);
+      closeReleaseModal();
+      renderSavedTests();
+    } else {
+      alert('Error: ' + json.error);
+    }
+  } catch(err) {
+    alert('Could not reach server. Please try again.');
+  }
+  btn.disabled = false;
+  btn.textContent = 'Send Breakdown to All Students';
+}
+
+// ══════════════════════════════════════
+// SUMMARY EMAIL
+// ══════════════════════════════════════
+function openSummaryModal(testId) {
+  const tests = getTests();
+  const sel = document.getElementById('summary-test-select');
+  sel.innerHTML = tests.map(t => `<option value="${t.id}" ${t.id === testId ? 'selected' : ''}>${t.title} — ${t.date}</option>`).join('');
+  const test = tests.find(t => t.id === testId);
+  if (test) document.getElementById('summary-tutor-email').textContent = test.email;
+  sel.onchange = () => {
+    const t = tests.find(x => x.id === sel.value);
+    if (t) document.getElementById('summary-tutor-email').textContent = t.email;
+  };
+  document.getElementById('summary-modal').classList.add('open');
+}
+function closeSummaryModal() { document.getElementById('summary-modal').classList.remove('open'); }
+
+async function sendSummary() {
+  const scriptUrl = getScriptUrl();
+  if (!scriptUrl) { alert('Please set your Google Script URL in the Tutor Portal first.'); return; }
+
+  const testId = document.getElementById('summary-test-select').value;
+  const test = getTests().find(t => t.id === testId);
+  if (!test) return;
+
+  const btn = document.getElementById('summary-send-btn');
+  btn.disabled = true;
+  btn.textContent = 'Sending...';
+
+  try {
+    const res = await fetch(scriptUrl, {
+      method: 'POST',
+      redirect: 'follow',
+      body: JSON.stringify({ action: 'summary', testId: test.id, testTitle: test.title, testDate: test.date, tutorEmail: test.email }),
+    });
+    const json = await res.json();
+    if (json.success) { alert(`✅ Summary sent to ${test.email}`); closeSummaryModal(); }
+    else { alert('Error: ' + json.error); }
+  } catch(err) {
+    alert('Could not reach Google Script. Check the URL in settings.\n\n' + err.message);
+  }
+  btn.disabled = false;
+  btn.textContent = 'Send Summary';
+}
+
+// ══════════════════════════════════════
+// STUDENT ENTRY
+// ══════════════════════════════════════
+function loadEntry(test) {
+  document.getElementById('entry-title').textContent = test.title;
+  document.getElementById('entry-meta').innerHTML = `📅 ${test.date} &nbsp;·&nbsp; ⏱ ${test.time} minutes &nbsp;·&nbsp; ❓ ${test.questions.length} questions &nbsp;·&nbsp; 1 mark each`;
+  const ibox = document.getElementById('entry-instructions');
+  const itxt = document.getElementById('entry-instr-text');
+  if (test.instructions && test.instructions.trim()) {
+    itxt.textContent = test.instructions;
+    ibox.style.display = 'block';
+  } else {
+    ibox.style.display = 'none';
+  }
+}
+
+function isValidEmail(email) {
+  // Must match: something @ something . something (2+ chars)
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+}
+
+function clearErr(id) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = '';
+}
+
+function validateEmailLive() {
+  const input = document.getElementById('s-email');
+  const err   = document.getElementById('err-email');
+  const ok    = document.getElementById('ok-email');
+  const val   = input.value.trim();
+
+  if (!val) {
+    input.classList.remove('input-err','input-ok');
+    err.textContent = ''; ok.textContent = ''; return;
+  }
+  if (val.includes(' ')) {
+    input.classList.add('input-err'); input.classList.remove('input-ok');
+    err.textContent = '⚠ Email addresses cannot contain spaces'; ok.textContent = ''; return;
+  }
+  if (!val.includes('@')) {
+    input.classList.add('input-err'); input.classList.remove('input-ok');
+    err.textContent = '⚠ Missing @ symbol'; ok.textContent = ''; return;
+  }
+  const parts = val.split('@');
+  if (parts[0].length === 0) {
+    input.classList.add('input-err'); input.classList.remove('input-ok');
+    err.textContent = '⚠ Enter something before the @ symbol'; ok.textContent = ''; return;
+  }
+  if (!parts[1] || !parts[1].includes('.')) {
+    input.classList.add('input-err'); input.classList.remove('input-ok');
+    err.textContent = '⚠ Domain looks incomplete — e.g. bathspa.ae'; ok.textContent = ''; return;
+  }
+  const ext = parts[1].split('.').pop();
+  if (ext.length < 2) {
+    input.classList.add('input-err'); input.classList.remove('input-ok');
+    err.textContent = '⚠ Email extension too short — e.g. .com or .ae'; ok.textContent = ''; return;
+  }
+  // All good
+  input.classList.add('input-ok'); input.classList.remove('input-err');
+  err.textContent = ''; ok.textContent = '✓ Looks good';
+}
+
+function startQuiz() {
+  const name      = document.getElementById('s-name').value.trim();
+  const email     = document.getElementById('s-email').value.trim();
+  const errName   = document.getElementById('err-name');
+  const errEmail  = document.getElementById('err-email');
+  let valid = true;
+
+  if (!name) {
+    errName.textContent = '⚠ Please enter your full name';
+    document.getElementById('s-name').classList.add('input-err');
+    valid = false;
+  }
+  if (!email) {
+    errEmail.textContent = '⚠ Please enter your email address';
+    document.getElementById('s-email').classList.add('input-err');
+    valid = false;
+  } else if (!isValidEmail(email)) {
+    errEmail.textContent = '⚠ This doesn\'t look like a valid email — please check and try again';
+    document.getElementById('s-email').classList.add('input-err');
+    valid = false;
+  }
+  if (!valid) return;
+
+  studentName  = name;
+  studentEmail = email;
+  answers  = {};
+  submitted = false;
+  beginQuiz();
+}
+
+// ══════════════════════════════════════
+// QUIZ ENGINE
+// ══════════════════════════════════════
+function beginQuiz() {
+  show('s-quiz');
+  document.getElementById('qbar-title').textContent = currentTest.title;
+  renderQuestions();
+  startTimer();
+  engageLock();
+}
+
+function renderQuestions() {
+  document.getElementById('q-container').innerHTML = currentTest.questions.map((q, i) => `
+    <div class="q-card" id="qc${i}">
+      <div class="q-num">Question ${i+1} of ${currentTest.questions.length}</div>
+      <div class="q-text">${esc(q.q)}</div>
+      <div class="opts">
+        ${q.opts.map((o, j) => `
+          <div class="opt" id="o${i}_${j+1}" onclick="pick(${i},${j+1})">
+            <div class="opt-key">${['A','B','C','D'][j]}</div>
+            <span>${esc(o)}</span>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+  updateBar();
+}
+
+function pick(qi, opt) {
+  answers[qi] = opt;
+  for (let j = 1; j <= 4; j++) {
+    const el = document.getElementById(`o${qi}_${j}`);
+    if (el) el.classList.toggle('sel', j === opt);
+  }
+  updateBar();
+}
+
+function updateBar() {
+  const total = currentTest.questions.length;
+  const done  = Object.keys(answers).length;
+  document.getElementById('qbar-progress').textContent = `${done}/${total} answered`;
+  document.getElementById('prog-fill').style.width = `${(done/total)*100}%`;
+}
+
+function startTimer() {
+  timeLeft = currentTest.time * 60;
+  tickTimer();
+  timerInt = setInterval(() => {
+    timeLeft--;
+    tickTimer();
+    if (timeLeft <= 0) { clearInterval(timerInt); doSubmit('Time limit reached'); }
+  }, 1000);
+}
+
+function tickTimer() {
+  const m = Math.floor(timeLeft/60), s = timeLeft % 60;
+  const el = document.getElementById('timer');
+  el.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  el.className = 'timer' + (timeLeft <= 60 ? ' hot' : timeLeft <= 180 ? ' warn' : '');
+}
+
+// ══════════════════════════════════════
+// SCREEN LOCK — no warnings, instant submit
+// ══════════════════════════════════════
+function engageLock() {
+  locked = true;
+  document.addEventListener('visibilitychange', onVis);
+  window.addEventListener('blur', onBlur);
+}
+function releaseLock() {
+  locked = false;
+  document.removeEventListener('visibilitychange', onVis);
+  window.removeEventListener('blur', onBlur);
+}
+function onVis()  { if (locked && document.hidden) doSubmit('Left screen — tab or app switch detected'); }
+function onBlur() { if (locked) doSubmit('Left screen — window lost focus'); }
+
+// ══════════════════════════════════════
+// SUBMIT
+// ══════════════════════════════════════
+function confirmSubmit() {
+  const total = currentTest.questions.length;
+  const done  = Object.keys(answers).length;
+  document.getElementById('confirm-body').textContent =
+    `You have answered ${done} of ${total} questions. Unanswered questions score 0. Submit now?`;
+  document.getElementById('confirm-modal').classList.add('open');
+}
+function closeConfirm() { document.getElementById('confirm-modal').classList.remove('open'); }
+
+function doSubmit(reason) {
+  if (submitted) return;
+  submitted = true;
+  releaseLock();
+  clearInterval(timerInt);
+  closeConfirm();
+
+  const total    = currentTest.questions.length;
+  const answered = Object.keys(answers).length;
+
+  // Record attempt on device to block retries
+  localStorage.setItem('ql_attempted_' + currentTest.id, JSON.stringify({
+    name: studentName, score: '?', total, pct: '?', at: new Date().toLocaleString()
+  }));
+
+  // Show result screen immediately — no waiting
+  show('s-result');
+  document.getElementById('res-name').textContent          = studentName;
+  document.getElementById('res-title').textContent         = currentTest.title;
+  document.getElementById('res-date').textContent          = currentTest.date;
+  document.getElementById('res-reason').textContent        = reason;
+  document.getElementById('res-email-display').textContent = studentEmail;
+  document.getElementById('res-email-note').textContent    = '⏳ Sending to server...';
+
+  // Send raw answers to server — server scores and sends email
+  fireAndForget({
+    action: 'submit', testId: currentTest.id, testTitle: currentTest.title,
+    testDate: currentTest.date, studentName, studentEmail,
+    answers, total, answered, submitReason: reason
+  });
+}
+
+async function fireAndForget(payload, attempt) {
+  attempt = attempt || 1;
+  const MAX_ATTEMPTS = 6;
+  const RETRY_DELAY  = 4000;
+  const scriptUrl    = getScriptUrl();
+  const noteEl       = document.getElementById('res-email-note');
+  if (!scriptUrl) return;
+
+  try {
+    const res  = await fetch(scriptUrl, { method: 'POST', redirect: 'follow', body: JSON.stringify(payload) });
+    const json = await res.json();
+    if (json.success) {
+      if (noteEl) noteEl.textContent = '✅ Submitted. Check your email for full results with answer breakdown.';
+    } else {
+      if (attempt < MAX_ATTEMPTS) {
+        if (noteEl) noteEl.textContent = `⏳ Retrying... (${attempt}/${MAX_ATTEMPTS})`;
+        setTimeout(() => fireAndForget(payload, attempt + 1), RETRY_DELAY);
+      } else {
+        if (noteEl) noteEl.innerHTML = '⚠️ Could not save result. Please show this screen to your tutor.';
+      }
+    }
+  } catch(err) {
+    if (attempt < MAX_ATTEMPTS) {
+      if (noteEl) noteEl.textContent = `⏳ Retrying... (${attempt}/${MAX_ATTEMPTS})`;
+      setTimeout(() => fireAndForget(payload, attempt + 1), RETRY_DELAY);
+    } else {
+      if (noteEl) noteEl.innerHTML = '⚠️ Could not save result. Please show this screen to your tutor.';
+    }
+  }
+}
+
+// ══════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
