@@ -1155,6 +1155,9 @@ function tickTimer() {
 // ══════════════════════════════════════
 // SCREEN LOCK — no warnings, instant submit
 // ══════════════════════════════════════
+let graceTimer = null;
+const GRACE_MS  = 3000; // 3 seconds grace period
+
 function engageLock() {
   locked = true;
   document.addEventListener('visibilitychange', onVis);
@@ -1162,11 +1165,45 @@ function engageLock() {
 }
 function releaseLock() {
   locked = false;
+  clearTimeout(graceTimer);
+  graceTimer = null;
   document.removeEventListener('visibilitychange', onVis);
   window.removeEventListener('blur', onBlur);
 }
-function onVis()  { if (locked && document.hidden) doSubmit('Left screen — tab or app switch detected'); }
-function onBlur() { if (locked) doSubmit('Left screen — window lost focus'); }
+function onVis() {
+  if (!locked) return;
+  if (document.hidden) {
+    // Start grace period timer
+    if (!graceTimer) {
+      graceTimer = setTimeout(() => {
+        if (document.hidden) doSubmit('Left screen — tab or app switch detected');
+      }, GRACE_MS);
+    }
+  } else {
+    // Student came back within grace period — cancel
+    clearTimeout(graceTimer);
+    graceTimer = null;
+  }
+}
+function onBlur() {
+  if (!locked) return;
+  if (!graceTimer) {
+    graceTimer = setTimeout(() => {
+      doSubmit('Left screen — window lost focus');
+    }, GRACE_MS);
+  }
+}
+// Cancel grace timer if window regains focus
+window.addEventListener('focus', () => {
+  clearTimeout(graceTimer);
+  graceTimer = null;
+});
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    clearTimeout(graceTimer);
+    graceTimer = null;
+  }
+});
 
 // ══════════════════════════════════════
 // SUBMIT
