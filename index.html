@@ -1085,6 +1085,12 @@ function startQuiz() {
 // QUIZ ENGINE
 // ══════════════════════════════════════
 function beginQuiz() {
+  // Shuffle questions — each student gets a different order
+  currentTest.questions = currentTest.questions
+    .map(q => ({ q, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(x => x.q);
+
   show('s-quiz');
   document.getElementById('qbar-title').textContent = currentTest.title;
   renderQuestions();
