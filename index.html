@@ -125,7 +125,7 @@ textarea{resize:vertical;min-height:110px;line-height:1.65}
 .timer.hot{background:var(--accent);animation:blink 1s infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.45}}
 .quiz-body{flex:1;padding:2rem 1.5rem;max-width:780px;margin:0 auto;width:100%}
-.prog-wrap{background:var(--cream);border-radius:20px;height:6px;margin-bottom:2rem;overflow:hidden}
+.prog-wrap{background:rgba(255,255,255,.15);border-radius:20px;height:5px;overflow:hidden}
 .prog-fill{height:100%;background:var(--accent);border-radius:20px;transition:width .35s}
 .q-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:1.8rem;margin-bottom:1.2rem;animation:fadeUp .3s ease}
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
@@ -454,15 +454,17 @@ pre.code-block{background:var(--ink);color:#f0f0f0;padding:1.2rem;border-radius:
 
 <!-- ══════════════ QUIZ ══════════════ -->
 <div id="s-quiz" class="screen">
-  <div class="quiz-bar">
-    <div class="quiz-bar-left" id="qbar-title">Quiz</div>
-    <div class="quiz-bar-right">
-      <span id="qbar-progress" style="opacity:.7">0/0 answered</span>
-      <span class="timer" id="timer">--:--</span>
+  <div class="quiz-bar" style="flex-direction:column;gap:.6rem;padding-bottom:.8rem">
+    <div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:1rem">
+      <div class="quiz-bar-left" id="qbar-title">Quiz</div>
+      <div class="quiz-bar-right">
+        <span id="qbar-progress" style="opacity:.7">0/0 answered</span>
+        <span class="timer" id="timer">--:--</span>
+      </div>
     </div>
+    <div class="prog-wrap" style="width:100%;margin:0"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
   </div>
   <div class="quiz-body">
-    <div class="prog-wrap"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
     <div id="q-container"></div>
   </div>
   <div class="submit-zone">
@@ -660,7 +662,7 @@ function showFetchError(msg) {
   show('s-land');
 }
 
-const HARDCODED_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby6r7Iz2w-QkpZxcSA5hV9YPrfJMFAUqL-Vd70HzNnOjZGxFeX00E-X4fwywkCAxKYIkw/exec';
+const HARDCODED_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwAsT-VwR0UbAncuPWGljA9HLMcyhqIAniq8dVd1YCCI5aYEN1RLaoiYicyzxlsmVp83g/exec';
 function loadScriptUrl() { /* hardcoded — nothing to load */ }
 function saveScriptUrl() { /* hardcoded — nothing to save */ }
 function getScriptUrl() { return HARDCODED_SCRIPT_URL; }
