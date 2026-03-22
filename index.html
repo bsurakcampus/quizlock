@@ -646,7 +646,7 @@ function showFetchError(msg) {
   show('s-land');
 }
 
-const HARDCODED_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby5b6wvMNAUiSFpJUF_mMRHPUbAlTIlhf6WwXFDpJhkw4EDsIuAesxWvpVitj4qtsLzMQ/exec';
+const HARDCODED_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwAsT-VwR0UbAncuPWGljA9HLMcyhqIAniq8dVd1YCCI5aYEN1RLaoiYicyzxlsmVp83g/exec';
 function loadScriptUrl() { /* hardcoded — nothing to load */ }
 function saveScriptUrl() { /* hardcoded — nothing to save */ }
 function getScriptUrl() { return HARDCODED_SCRIPT_URL; }
@@ -1082,8 +1082,9 @@ function startQuiz() {
 // QUIZ ENGINE
 // ══════════════════════════════════════
 function beginQuiz() {
-  // Shuffle questions — each student gets a different order
+  // Shuffle questions — tag each with its original index before shuffling
   currentTest.questions = currentTest.questions
+    .map((q, i) => ({ ...q, originalIndex: i }))
     .map(q => ({ q, sort: Math.random() }))
     .sort((a, b) => a.sort - b.sort)
     .map(x => x.q);
@@ -1233,11 +1234,19 @@ function doSubmit(reason) {
   document.getElementById('res-email-display').textContent = studentEmail;
   document.getElementById('res-email-note').textContent    = '';
 
+  // Remap answers from shuffled positions back to original question indices
+  const remappedAnswers = {};
+  Object.keys(answers).forEach(shuffledIdx => {
+    const q = currentTest.questions[shuffledIdx];
+    const origIdx = q.originalIndex !== undefined ? q.originalIndex : shuffledIdx;
+    remappedAnswers[origIdx] = answers[shuffledIdx];
+  });
+
   // Fire and forget — save result and send email in background
   fireAndForget({
     action: 'submit', testId: currentTest.id, testTitle: currentTest.title,
     testDate: currentTest.date, studentName, studentEmail,
-    answers, total, answered, submitReason: reason
+    answers: remappedAnswers, total, answered, submitReason: reason
   });
 }
 
