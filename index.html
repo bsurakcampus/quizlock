@@ -213,8 +213,11 @@ pre.code-block{background:var(--ink);color:#f0f0f0;padding:1.2rem;border-radius:
     <p style="margin-top:2.5rem;font-size:.7rem;color:rgba(246,242,235,.25);font-family:'DM Mono',monospace;line-height:1.8">
       Students join via QR code · No app needed · Works on any device
     </p>
-    <p style="margin-top:2rem;font-size:.72rem;color:rgba(246,242,236,.3);font-family:'DM Mono',monospace;letter-spacing:.06em">
-      Concept: Iftikhar Khan &nbsp;|&nbsp; Development: Claude Code
+    <p style="margin-top:2rem;font-size:.72rem;color:rgba(246,242,236,.2);font-family:'DM Mono',monospace;letter-spacing:.08em">
+      Concept &amp; Design &nbsp;|&nbsp; Iftikhar Khan
+    </p>
+    <p style="margin-top:.3rem;font-size:.72rem;color:rgba(246,242,236,.2);font-family:'DM Mono',monospace;letter-spacing:.08em">
+      Powered by &nbsp;|&nbsp; Claude Code
     </p>
     <p style="margin-top:.4rem;font-size:.72rem;color:rgba(246,242,236,.2);font-family:'DM Mono',monospace;letter-spacing:.08em">
       Bath Spa University — RAK Campus, UAE
@@ -467,29 +470,20 @@ pre.code-block{background:var(--ink);color:#f0f0f0;padding:1.2rem;border-radius:
 <div id="s-result" class="screen">
   <div style="display:flex;align-items:center;justify-content:center;flex:1;padding:1.5rem;background:var(--ink)">
     <div class="result-card" style="text-align:center">
-      <div style="font-size:3.5rem;margin-bottom:1rem">✅</div>
+      <div style="font-size:4rem;margin-bottom:1rem">✅</div>
       <div style="font-family:'DM Serif Display',serif;font-size:2rem;color:var(--ink);margin-bottom:.5rem">Test Submitted</div>
-      <div style="font-size:.8rem;text-transform:uppercase;letter-spacing:.15em;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:1.4rem">Your answers have been received</div>
-      <div id="res-score-display" style="display:none;background:#fff;border:1px solid var(--border);border-radius:10px;padding:1.4rem;margin-bottom:1.4rem">
-        <div style="font-family:'DM Serif Display',serif;font-size:4rem;line-height:1;color:var(--accent)" id="res-score-num">—</div>
-        <div style="font-size:.8rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-family:'DM Mono',monospace;margin-top:.4rem" id="res-score-pct">—</div>
-      </div>
-      <div id="res-score-waiting" style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:1.4rem;margin-bottom:1.4rem">
-        <div style="font-size:1.8rem;margin-bottom:.5rem">⏳</div>
-        <div style="font-weight:600;font-size:.95rem;color:var(--ink);margin-bottom:.3rem">Calculating your score...</div>
-        <div style="font-size:.8rem;color:var(--muted);line-height:1.6">Please stay on this screen.<br>Your result will appear here in a few seconds.</div>
-      </div>
+      <div style="font-size:.8rem;text-transform:uppercase;letter-spacing:.15em;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:1.8rem">Your answers have been received</div>
       <div style="background:var(--cream);border-radius:8px;padding:1.4rem 1.6rem;margin-bottom:1.4rem;text-align:left;font-size:.88rem;line-height:2">
         <div>Student: <strong id="res-name">—</strong></div>
         <div>Test: <strong id="res-title">—</strong></div>
         <div>Date: <strong id="res-date">—</strong></div>
         <div>Submitted: <strong id="res-reason">—</strong></div>
       </div>
-      <div style="background:#eaf0ff;border:1px solid #a0bcf0;border-radius:8px;padding:1.1rem 1.4rem;font-size:.88rem;color:#1a3a8a;line-height:1.7;margin-bottom:.8rem">
-        📧 Your full result with correct answers will be emailed to<br>
+      <div style="background:#eaf0ff;border:1px solid #a0bcf0;border-radius:8px;padding:1.1rem 1.4rem;font-size:.88rem;color:#1a3a8a;line-height:1.7">
+        📧 Your score and full results will be emailed to<br>
         <strong id="res-email-display">your email address</strong>
       </div>
-      <div id="res-email-note" class="res-note" style="font-size:.76rem;color:var(--muted);margin-top:.5rem"></div>
+      <div id="res-email-note" class="res-note" style="font-size:.76rem;color:var(--muted);margin-top:.8rem"></div>
     </div>
   </div>
 </div>
@@ -652,7 +646,7 @@ function showFetchError(msg) {
   show('s-land');
 }
 
-const HARDCODED_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwAsT-VwR0UbAncuPWGljA9HLMcyhqIAniq8dVd1YCCI5aYEN1RLaoiYicyzxlsmVp83g/exec';
+const HARDCODED_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbztPcxxv3TRzJsWlYwHR6GrOq7Mb5YB687Fx2bnSLVzeSsaKj9_CQVoRIivUOnpnq-SGg/exec';
 function loadScriptUrl() { /* hardcoded — nothing to load */ }
 function saveScriptUrl() { /* hardcoded — nothing to save */ }
 function getScriptUrl() { return HARDCODED_SCRIPT_URL; }
@@ -1227,19 +1221,19 @@ function doSubmit(reason) {
 
   // Record attempt on device to block retries
   localStorage.setItem('ql_attempted_' + currentTest.id, JSON.stringify({
-    name: studentName, score: '?', total, pct: '?', at: new Date().toLocaleString()
+    name: studentName, at: new Date().toLocaleString()
   }));
 
-  // Show result screen immediately — no waiting
+  // Show result screen immediately
   show('s-result');
   document.getElementById('res-name').textContent          = studentName;
   document.getElementById('res-title').textContent         = currentTest.title;
   document.getElementById('res-date').textContent          = currentTest.date;
   document.getElementById('res-reason').textContent        = reason;
   document.getElementById('res-email-display').textContent = studentEmail;
-  document.getElementById('res-email-note').textContent    = '⏳ Sending to server...';
+  document.getElementById('res-email-note').textContent    = '';
 
-  // Send raw answers to server — server scores and sends email
+  // Fire and forget — save result and send email in background
   fireAndForget({
     action: 'submit', testId: currentTest.id, testTitle: currentTest.title,
     testDate: currentTest.date, studentName, studentEmail,
@@ -1251,78 +1245,29 @@ async function fireAndForget(payload, attempt) {
   attempt = attempt || 1;
   const MAX_ATTEMPTS = 4;
   const RETRY_DELAY  = 5000;
-  const TIMEOUT_MS   = 15000; // 15 second timeout per attempt
+  const TIMEOUT_MS   = 15000;
   const scriptUrl    = getScriptUrl();
   const noteEl       = document.getElementById('res-email-note');
-  const scoreWaiting = document.getElementById('res-score-waiting');
   if (!scriptUrl) return;
 
-  if (noteEl) noteEl.textContent = attempt === 1
-    ? '⏳ Sending to server...'
-    : `⏳ Retrying... (${attempt}/${MAX_ATTEMPTS})`;
-
-  // Create fetch with timeout
   const controller = new AbortController();
   const timeoutId  = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
   try {
     const res = await fetch(scriptUrl, {
-      method: 'POST',
-      redirect: 'follow',
+      method: 'POST', redirect: 'follow',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(payload),
       signal: controller.signal
     });
     clearTimeout(timeoutId);
-
-    const raw = await res.text();
-    let json;
-    try { json = JSON.parse(raw); }
-    catch(e) {
-      // Response came back but wasn't JSON — still show score as saved
-      if (scoreWaiting) scoreWaiting.style.display = 'none';
-      const sd = document.getElementById('res-score-display');
-      if (sd) { document.getElementById('res-score-num').textContent = '✓'; document.getElementById('res-score-pct').textContent = 'Submitted'; sd.style.display = 'block'; }
-      if (noteEl) noteEl.textContent = '✅ Submitted. Check your email for results.';
-      return;
-    }
-
-    if (json.success) {
-      const scoreDisplay = document.getElementById('res-score-display');
-      const scoreNum     = document.getElementById('res-score-num');
-      const scorePct     = document.getElementById('res-score-pct');
-      if (scoreWaiting) scoreWaiting.style.display = 'none';
-      if (scoreDisplay) {
-        if (json.score !== undefined && json.score !== null) {
-          scoreNum.textContent       = `${json.score}/${json.total}`;
-          scorePct.textContent       = `${json.percent}% — ${json.status}`;
-          scorePct.style.color       = json.percent >= 40 ? 'var(--green)' : 'var(--accent)';
-        } else {
-          scoreNum.textContent = '✓';
-          scorePct.textContent = 'Submitted successfully';
-          scorePct.style.color = 'var(--green)';
-        }
-        scoreDisplay.style.display = 'block';
-      }
-      if (noteEl) noteEl.textContent = '✅ Check your email for your score and full results.';
-    } else {
-      if (attempt < MAX_ATTEMPTS) {
-        setTimeout(() => fireAndForget(payload, attempt + 1), RETRY_DELAY);
-      } else {
-        if (scoreWaiting) scoreWaiting.style.display = 'none';
-        if (noteEl) noteEl.innerHTML = `⚠️ Error: ${json.error || 'unknown'}. Please show this to your tutor.`;
-      }
-    }
+    // Success — result saved and email sent, nothing to show on screen
   } catch(err) {
     clearTimeout(timeoutId);
     if (attempt < MAX_ATTEMPTS) {
       setTimeout(() => fireAndForget(payload, attempt + 1), RETRY_DELAY);
     } else {
-      // All attempts failed — show fallback
-      if (scoreWaiting) scoreWaiting.style.display = 'none';
-      const sd = document.getElementById('res-score-display');
-      if (sd) { document.getElementById('res-score-num').textContent = '✓'; document.getElementById('res-score-pct').textContent = 'Submitted'; document.getElementById('res-score-pct').style.color = 'var(--green)'; sd.style.display = 'block'; }
-      if (noteEl) noteEl.innerHTML = '⚠️ Could not confirm with server. Your answers were recorded. Please show this screen to your tutor.';
+      if (noteEl) noteEl.innerHTML = '⚠️ Could not reach server. Please show this screen to your tutor.';
     }
   }
 }
