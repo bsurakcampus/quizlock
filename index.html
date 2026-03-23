@@ -345,8 +345,10 @@ pre.code-block{background:var(--ink);color:#f0f0f0;padding:1.2rem;border-radius:
         <div><label class="card-label">Test Title</label>
         <input type="text" id="t-title" placeholder="e.g. Week 5 — Principles of Design"></div>
         <div><label class="card-label">Test Date</label>
-        <input type="date" id="t-date-picker" onchange="formatDate(this)">
-        <input type="hidden" id="t-date"></div>
+        <div style="position:relative">
+          <input type="text" id="t-date" placeholder="23 Mar 2026" readonly style="cursor:pointer;background:#fff" onclick="document.getElementById('t-date-picker').showPicker()">
+          <input type="date" id="t-date-picker" onchange="formatDate(this)" style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer">
+        </div></div>
       </div>
       <div class="row2">
         <div><label class="card-label">Tutor Email (summary sent here)</label>
