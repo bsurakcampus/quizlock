@@ -345,10 +345,7 @@ pre.code-block{background:var(--ink);color:#f0f0f0;padding:1.2rem;border-radius:
         <div><label class="card-label">Test Title</label>
         <input type="text" id="t-title" placeholder="e.g. Week 5 — Principles of Design"></div>
         <div><label class="card-label">Test Date</label>
-        <div style="display:flex;gap:.5rem;align-items:center">
-<input type="date" id="t-date-picker" onchange="formatDate(this)" style="width:100%;padding:.75rem 1rem;border:1px solid var(--border);border-radius:5px;font-family:'Sora',sans-serif;font-size:.88rem;color:var(--ink);background:var(--paper);outline:none">
-          <input type="hidden" id="t-date">
-        </div></div>
+        <input type="text" id="t-date" placeholder="e.g. 19 March 2026"></div>
       </div>
       <div class="row2">
         <div><label class="card-label">Tutor Email (summary sent here)</label>
@@ -562,7 +559,6 @@ window.addEventListener('DOMContentLoaded', () => {
   loadScriptUrl();
   loadTutorIdentity();
   renderSavedTests();
-  setTodayDate();
 
   // QR routing — student arrives via scanned URL, fetch test from server
   const params = new URLSearchParams(window.location.search);
@@ -681,21 +677,6 @@ function toggleHowTo() {
   chevron.style.transform = open ? 'rotate(180deg)' : 'rotate(0deg)';
 }
 
-function setTodayDate() {
-  const picker = document.getElementById('t-date-picker');
-  if (!picker) return;
-  const today = new Date();
-  picker.value = today.toISOString().split('T')[0];
-  formatDate(picker);
-}
-
-function formatDate(input) {
-  if (!input.value) return;
-  const d = new Date(input.value + 'T00:00:00');
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  document.getElementById('t-date').value = `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
-}
-
 // ══════════════════════════════════════
 // TUTOR IDENTITY
 // ══════════════════════════════════════
@@ -757,14 +738,14 @@ function handleFile(input) {
 // ══════════════════════════════════════
 function createTest() {
   const title       = document.getElementById('t-title').value.trim();
-  const date         = document.getElementById('t-date').value.trim();
+  const date        = document.getElementById('t-date').value.trim();
   const email       = document.getElementById('t-email').value.trim();
   const tutorName   = localStorage.getItem('tutor_name') || '';
   const time        = parseInt(document.getElementById('t-time').value);
   const instructions= document.getElementById('t-instructions').value.trim();
 
   if (!title)                       { alert('Please enter a test title.'); return; }
-  if (!date)                        { alert('Please select a test date.'); return; }
+  if (!date)                        { alert('Please enter the test date.'); return; }
   if (!email || !email.includes('@')){ alert('Please enter a valid tutor email.'); return; }
   if (!time || time < 1)            { alert('Please enter a valid time limit.'); return; }
   if (!parsedQs.length)             { alert('Please upload your question Excel file first.'); return; }
@@ -805,9 +786,7 @@ async function saveTestToSheet(test) {
 }
 
 function clearForm() {
-  ['t-title','t-email','t-time'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('t-date').value = '';
-  setTodayDate();
+  ['t-title','t-date','t-email','t-time'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('t-instructions').value = `• This test has 25 questions, 1 mark each.\n• Enable Do Not Disturb on your phone NOW before pressing Begin.\n• Read each question carefully before selecting your answer.\n• Leaving this screen for more than 1 second — switching apps, minimising, or pressing Home — will auto-submit your test with marks obtained so far.\n• You cannot change your answers once the test is submitted.\n• You will receive the result in the email you enter here, so please check and enter your email carefully.`;
   parsedQs = [];
   const z = document.getElementById('upload-zone');
