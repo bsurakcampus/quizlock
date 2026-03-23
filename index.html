@@ -346,8 +346,8 @@ pre.code-block{background:var(--ink);color:#f0f0f0;padding:1.2rem;border-radius:
         <input type="text" id="t-title" placeholder="e.g. Week 5 — Principles of Design"></div>
         <div><label class="card-label">Test Date</label>
         <div style="position:relative">
-          <input type="text" id="t-date" placeholder="23 Mar 2026" readonly style="cursor:pointer;background:#fff" onclick="document.getElementById('t-date-picker').showPicker()">
-          <input type="date" id="t-date-picker" onchange="formatDate(this)" style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer">
+          <input type="text" id="t-date" placeholder="23 Mar 2026" readonly style="cursor:pointer;background:#fff;pointer-events:none">
+          <input type="date" id="t-date-picker" onchange="formatDate(this)" style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0.01;cursor:pointer;z-index:2">
         </div></div>
       </div>
       <div class="row2">
